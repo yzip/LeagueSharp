@@ -150,7 +150,7 @@ namespace BaseUlt2
                 stageType = DamageLib.StageType.ThirdDamage;
 
             float ultdamage = (float)DamageLib.getDmg(player, DamageLib.SpellType.R, stageType);
-            float timeneeded = Helper.GetSpellTravelTime(ObjectManager.Player.Spellbook.GetSpell(SpellSlot.R), EnemySpawnPos) + Game.Ping - 175; //increase timeneeded if it should arrive earlier, decrease if later
+            float timeneeded = Helper.GetSpellTravelTime(ObjectManager.Player.Spellbook.GetSpell(SpellSlot.R), EnemySpawnPos) + Game.Ping - 170; //increase timeneeded if it should arrive earlier, decrease if later
 
             if (Helper.GetTargetHealth(playerinfo, timeneeded) > ultdamage)
             {
@@ -165,10 +165,16 @@ namespace BaseUlt2
 
             if (countdown <= timeneeded && !(timeneeded - countdown > 100))
             {
-                if (Menu != null && Menu.Item("debugMode").GetValue<bool>())
-                    Game.PrintChat("SHOOT {0} (Health: {1} UltDamage: {2} ReactionTime: {3})", playerinfo.GetPlayer().ChampionName, Helper.GetTargetHealth(playerinfo, timeneeded), ultdamage, (timeneeded - countdown));
+                if(Helper.CheckNoCollision(EnemySpawnPos.To2D(), player.NetworkId))
+                {
+                    if (Menu != null && Menu.Item("debugMode").GetValue<bool>())
+                        Game.PrintChat("SHOOT {0} (Health: {1} UltDamage: {2} ReactionTime: {3})", playerinfo.GetPlayer().ChampionName, Helper.GetTargetHealth(playerinfo, timeneeded), ultdamage, (timeneeded - countdown));
 
-                ObjectManager.Player.Spellbook.CastSpell(SpellSlot.R, EnemySpawnPos);
+                    ObjectManager.Player.Spellbook.CastSpell(SpellSlot.R, EnemySpawnPos);
+                }
+                else
+                    if (Menu != null && Menu.Item("debugMode").GetValue<bool>())
+                        Game.PrintChat("DONT SHOOT COLLISION {0} (Health: {1} UltDamage: {2})", playerinfo.GetPlayer().ChampionName, Helper.GetTargetHealth(playerinfo, timeneeded), ultdamage);
             }
         }
 

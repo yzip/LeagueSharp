@@ -15,6 +15,8 @@ namespace BaseUlt2
 
         static Vector3 EnemySpawnPos;
 
+        public static bool IsDominion;
+
         static Menu Menu;
 
         static List<PlayerInfo> Players = new List<PlayerInfo>();
@@ -50,6 +52,8 @@ namespace BaseUlt2
                     }
                 }
             }
+
+            IsDominion = Utility.Map.GetMap() == Utility.Map.MapType.CrystalScar;
 
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>()) //preadd everyone, because otherwise lastSeen might not be correctly updated
                 AddRecall(new Packet.S2C.Recall.Struct(hero.NetworkId, Packet.S2C.Recall.RecallStatus.Unknown, Packet.S2C.Recall.ObjectType.Player, 0));

@@ -105,17 +105,14 @@ namespace BaseUlt2
             {
                 if (teleport)
                     result.Duration = 3500;
-                else
+                else //use masteries to detect recall duration, because spelldata is not initialized yet when enemy has not been seen
                 {
-                    string rName = unit.Spellbook.GetSpell(SpellSlot.Recall).Name;
+                    result.Duration = Program.IsDominion ? 4500 : 8000;
 
-                    switch (rName)
-                    {
-                        case "Recall": result.Duration = 8000; break;
-                        case "RecallImproved": result.Duration = 7000; break;
-                        case "OdinRecall": result.Duration = 4500; break;
-                        case "OdinRecallImproved": result.Duration = 4000; break;
-                    }
+                    foreach (Mastery mastery in unit.Masteries)
+                        if (mastery.Page == MasteryPage.Utility)
+                            if (mastery.Id == 65 && mastery.Points == 1)
+                                result.Duration -= Program.IsDominion ? 500 : 1000; //phasewalker for dominion only 0.5s decrease
                 }
 
                 if (!Program.RecallT.ContainsKey(result.UnitNetworkId))

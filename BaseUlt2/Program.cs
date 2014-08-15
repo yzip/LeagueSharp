@@ -176,8 +176,7 @@ namespace BaseUlt2
 
                     ObjectManager.Player.Spellbook.CastSpell(SpellSlot.R, EnemySpawnPos);
                 }
-                else
-                    if (Menu != null && Menu.Item("debugMode").GetValue<bool>())
+                else if (Menu != null && Menu.Item("debugMode").GetValue<bool>())
                         Game.PrintChat("DONT SHOOT COLLISION {0} (Health: {1} UltDamage: {2})", playerinfo.GetPlayer().ChampionName, Helper.GetTargetHealth(playerinfo, timeneeded), ultdamage);
             }
         }

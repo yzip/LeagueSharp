@@ -46,37 +46,6 @@ namespace BaseUlt2
                 CompatibleChamp = true;
                 Ult = new Spell(SpellSlot.R, 20000f);
 
-                switch (ObjectManager.Player.ChampionName)
-                {
-                    case "Jinx":
-                        UltWidth = 140f;
-                        UltDelay = 600f / 1000f;
-                        UltSpeed = 1700f;
-                        UltRange = 20000f;
-                        break;
-                    case "Ashe":
-                        UltWidth = 130f;
-                        UltDelay = 250f / 1000f;
-                        UltSpeed = 1600;
-                        UltRange = 20000f;
-                        break;
-                    case "Draven":
-                        UltWidth = 160f;
-                        UltDelay = 400f / 1000f;
-                        UltSpeed = 2000f;
-                        UltRange = 20000f;
-                        UltDamageReductionMultiplicator = 0.7f;
-                        StageType = DamageLib.StageType.FirstDamage; //only first hit
-                        break;
-                    case "Ezreal":
-                        UltWidth = 160f;
-                        UltDelay = 1000f / 1000f;
-                        UltSpeed = 2000f;
-                        UltRange = 20000f;
-                        UltDamageReductionMultiplicator = 0.7f;
-                        break;
-                }
-
                 foreach (GameObject spawn in ObjectManager.Get<GameObject>())
                 {
                     if (spawn == null) continue;
@@ -114,7 +83,43 @@ namespace BaseUlt2
             Menu.AddItem(new MenuItem("showRecalls", "Show Recalls").SetValue(true));
             Menu.AddItem(new MenuItem("baseUlt", "Base Ult").SetValue(true));
             Menu.AddItem(new MenuItem("panicKey", "Panic key (hold for disable)").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
+            Menu.AddItem(new MenuItem("minUltDamage", "Calc minimum ult dmg (Ez, Draven)").SetValue(false));
             Menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false));
+
+            if(CompatibleChamp)
+            {
+                switch (ObjectManager.Player.ChampionName)
+                {
+                    case "Jinx":
+                        UltWidth = 140f;
+                        UltDelay = 600f / 1000f;
+                        UltSpeed = 1700f;
+                        UltRange = 20000f;
+                        break;
+                    case "Ashe":
+                        UltWidth = 130f;
+                        UltDelay = 250f / 1000f;
+                        UltSpeed = 1600;
+                        UltRange = 20000f;
+                        break;
+                    case "Draven":
+                        UltWidth = 160f;
+                        UltDelay = 400f / 1000f;
+                        UltSpeed = 2000f;
+                        UltRange = 20000f;
+                        UltDamageReductionMultiplicator = Menu.Item("minUltDamage").GetValue<bool>() ? 1f : 0.7f;
+                        StageType = Menu.Item("minUltDamage").GetValue<bool>() ? DamageLib.StageType.ThirdDamage : DamageLib.StageType.FirstDamage;
+                        break;
+                    case "Ezreal":
+                        UltWidth = 160f;
+                        UltDelay = 1000f / 1000f;
+                        UltSpeed = 2000f;
+                        UltRange = 20000f;
+                        UltDamageReductionMultiplicator = Menu.Item("minUltDamage").GetValue<bool>() ? 1f : 0.7f;
+                        StageType = Menu.Item("minUltDamage").GetValue<bool>() ? DamageLib.StageType.FirstDamage : DamageLib.StageType.Default;
+                        break;
+                }
+            }
 
             Game.PrintChat("<font color=\"#1eff00\">BaseUlt2 -</font> <font color=\"#00BFFF\">Loaded (compatible champ: " + (CompatibleChamp ? "Yes" : "No") + ")</font>");
         }

@@ -17,13 +17,19 @@ namespace BaseUlt2
             return predictedhealth > playerinfo.GetPlayer().MaxHealth ? playerinfo.GetPlayer().MaxHealth : predictedhealth;
         }
 
-        public static float GetSpellTravelTime(SpellDataInst ult, Vector3 targetpos)
+        public static float GetSpellTravelTime(float speed, float delay, Vector3 targetpos)
         {
             float distance = Vector3.Distance(ObjectManager.Player.ServerPosition, targetpos);
-            float missilespeed = ObjectManager.Player.ChampionName != "Jinx" ? ult.SData.MissileSpeed :
-                (distance <= 1500f ? ult.SData.MissileSpeed : (1500f * ult.SData.MissileSpeed + ((distance - 1500f) * 2200f)) / distance); //1700 = missilespeed, 2200 = missilespeed after acceleration, 1500 = distance where acceleration activates
+            float missilespeed = ObjectManager.Player.ChampionName != "Jinx" ? speed :
+                (distance <= 1500f ? speed : (1500f * speed + ((distance - 1500f) * 2200f)) / distance); //1700 = missilespeed, 2200 = missilespeed after acceleration, 1350 acceleration starts, 1500 = fully acceleration
 
-            return (distance / missilespeed + Math.Abs(ult.SData.SpellCastTime)) * 1000;
+            return (distance / missilespeed + Math.Abs(delay)) * 1000;
+
+            /*float distance = Vector3.Distance(ObjectManager.Player.ServerPosition, targetpos);
+            float missilespeed = ObjectManager.Player.ChampionName != "Jinx" ? ult.SData.MissileSpeed :
+                (distance <= 1500f ? ult.SData.MissileSpeed : (1500f * ult.SData.MissileSpeed + ((distance - 1500f) * 2200f)) / distance); //1700 = missilespeed, 2200 = missilespeed after acceleration, 1350 acceleration starts, 1500 = fully acceleration
+
+            return (distance / missilespeed + Math.Abs(ult.SData.SpellCastTime)) * 1000;*/
         }
 
         public static void DrawCircleTime(Vector2 center, float radius, float thickness, float precision, System.Drawing.Color color, int starttime, int endtime)
@@ -136,34 +142,8 @@ namespace BaseUlt2
             return result;
         }
 
-        public static bool CheckNoCollision(Vector2 targetpos, int targetnetid)
+        public static bool CheckNoCollision(Vector2 targetpos, int targetnetid, float width, float delay, float speed, float range)
         {
-            float width, delay, speed, range;
-
-            switch (ObjectManager.Player.ChampionName)
-            {
-                case "Jinx":
-                    width = 140f;
-                    delay = 600f;
-                    speed = 1700f;
-                    range = 20000f;
-                    break;
-                case "Ashe":
-                    width = 130f;
-                    delay = 250f;
-                    speed = 1600;
-                    range = 20000f;
-                    break;
-                case "Draven":
-                    width = 160f;
-                    delay = 400f;
-                    speed = 2000f;
-                    range = 20000f;
-                    break;
-                default:
-                    return true;
-            }
-
             List<Vector2> collisions = new List<Vector2>();
             collisions.Add(targetpos);
 

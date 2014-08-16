@@ -11,17 +11,22 @@ namespace BaseUlt2
 {
     class Program
     {
+        static Menu Menu;
+        static List<PlayerInfo> Players = new List<PlayerInfo>();
+        public static Dictionary<int, int> RecallT = new Dictionary<int, int>();
+
         static bool CompatibleChamp;
 
         static Vector3 EnemySpawnPos;
-
         public static bool IsDominion;
 
-        static Menu Menu;
+        static Spell Ult;
+        static DamageLib.StageType StageType = DamageLib.StageType.Default;
+        static float UltWidth, UltDelay, UltSpeed, UltRange;
 
-        static List<PlayerInfo> Players = new List<PlayerInfo>();
+        static float UltDamageReductionMultiplicator = 1f;
 
-        public static Dictionary<int, int> RecallT = new Dictionary<int, int>();
+        static int UltCasted;
 
         static void Main(string[] args)
         {
@@ -39,16 +44,50 @@ namespace BaseUlt2
                 ObjectManager.Player.ChampionName == "Jinx")
             {
                 CompatibleChamp = true;
-            }
+                Ult = new Spell(SpellSlot.R, 20000f);
 
-            foreach (GameObject spawn in ObjectManager.Get<GameObject>())
-            {
-                if (spawn.Type == GameObjectType.obj_SpawnPoint)
+                switch (ObjectManager.Player.ChampionName)
                 {
-                    if (spawn.Team != ObjectManager.Player.Team)
-                    {
-                        EnemySpawnPos = spawn.Position;
+                    case "Jinx":
+                        UltWidth = 140f;
+                        UltDelay = 600f / 1000f;
+                        UltSpeed = 1700f;
+                        UltRange = 20000f;
                         break;
+                    case "Ashe":
+                        UltWidth = 130f;
+                        UltDelay = 250f / 1000f;
+                        UltSpeed = 1600;
+                        UltRange = 20000f;
+                        break;
+                    case "Draven":
+                        UltWidth = 160f;
+                        UltDelay = 400f / 1000f;
+                        UltSpeed = 2000f;
+                        UltRange = 20000f;
+                        UltDamageReductionMultiplicator = 0.7f;
+                        StageType = DamageLib.StageType.FirstDamage; //only first hit
+                        break;
+                    case "Ezreal":
+                        UltWidth = 160f;
+                        UltDelay = 1000f / 1000f;
+                        UltSpeed = 2000f;
+                        UltRange = 20000f;
+                        UltDamageReductionMultiplicator = 0.7f;
+                        break;
+                }
+
+                foreach (GameObject spawn in ObjectManager.Get<GameObject>())
+                {
+                    if (spawn == null) continue;
+
+                    if (spawn.Type == GameObjectType.obj_SpawnPoint)
+                    {
+                        if (spawn.Team != ObjectManager.Player.Team)
+                        {
+                            EnemySpawnPos = spawn.Position;
+                            break;
+                        }
                     }
                 }
             }
@@ -56,12 +95,19 @@ namespace BaseUlt2
             IsDominion = Utility.Map.GetMap() == Utility.Map.MapType.CrystalScar;
 
             foreach (Obj_AI_Hero hero in ObjectManager.Get<Obj_AI_Hero>()) //preadd everyone, because otherwise lastSeen might not be correctly updated
+            {
+                if (hero == null) continue;
+
                 AddRecall(new Packet.S2C.Recall.Struct(hero.NetworkId, Packet.S2C.Recall.RecallStatus.Unknown, Packet.S2C.Recall.ObjectType.Player, 0));
+            }
+
             AddRecall(new Packet.S2C.Recall.Struct(ObjectManager.Player.NetworkId, Packet.S2C.Recall.RecallStatus.Unknown, Packet.S2C.Recall.ObjectType.Player, 0));
 
             Game.OnGameProcessPacket += Game_OnGameProcessPacket; //put handlers before Menu init, because LeagueSharp.Common fucks them up. when fixed, put them after and remove the Menu checks
-            Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
+
+            if (CompatibleChamp)
+                Game.OnGameUpdate += Game_OnGameUpdate;
 
             Menu = new Menu("BaseUlt", "BaseUlt", true);
             Menu.AddToMainMenu();
@@ -69,6 +115,8 @@ namespace BaseUlt2
             Menu.AddItem(new MenuItem("baseUlt", "Base Ult").SetValue(true));
             Menu.AddItem(new MenuItem("panicKey", "Panic key (hold for disable)").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
             Menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false));
+
+            Game.PrintChat("<font color=\"#1eff00\">BaseUlt2 -</font> <font color=\"#00BFFF\">Loaded (compatible champ: " + (CompatibleChamp ? "Yes" : "No") + ")</font>");
         }
 
         static void Drawing_OnDraw(EventArgs args)
@@ -79,6 +127,7 @@ namespace BaseUlt2
 
             foreach (PlayerInfo playerinfo in from playerinfo in Players
                                               where
+                                                  playerinfo != null &&
                                                   (playerinfo.recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted || playerinfo.recall.Status == Packet.S2C.Recall.RecallStatus.TeleportStart) &&
                                                   playerinfo.GetPlayer() != null &&
                                                   playerinfo.GetPlayer().IsValid &&
@@ -109,12 +158,11 @@ namespace BaseUlt2
 
         static void Game_OnGameUpdate(EventArgs args)
         {
-            if (!CompatibleChamp) return;
-
             int time = Environment.TickCount;
 
             foreach (PlayerInfo playerinfo in from playerinfo in Players
                                               where
+                                                  playerinfo != null &&
                                                   playerinfo.GetPlayer() != null &&
                                                   playerinfo.GetPlayer().IsVisible
                                               select playerinfo)
@@ -124,11 +172,12 @@ namespace BaseUlt2
 
             if (Menu == null || !Menu.Item("baseUlt").GetValue<bool>()) return;
 
-            if (Menu.Item("panicKey").GetValue<KeyBind>().Active || ObjectManager.Player.IsDead || ObjectManager.Player.Spellbook.CanUseSpell(SpellSlot.R) != SpellState.Ready)
+            if (Menu.Item("panicKey").GetValue<KeyBind>().Active || ObjectManager.Player.IsDead || !Ult.IsReady())
                 return;
 
             foreach (PlayerInfo playerinfo in from playerinfo in Players
                                               where
+                                                  playerinfo != null &&
                                                   playerinfo.GetPlayer() != null &&
                                                   playerinfo.GetPlayer().IsValid &&
                                                   !playerinfo.GetPlayer().IsDead &&
@@ -138,7 +187,8 @@ namespace BaseUlt2
                                               orderby playerinfo.GetTime()
                                               select playerinfo)
             {
-                HandleRecallShot(playerinfo);
+                if (UltCasted == 0 || Environment.TickCount - UltCasted > 15000) //check for draven ult return
+                    HandleRecallShot(playerinfo);
             }
         }
 
@@ -146,15 +196,8 @@ namespace BaseUlt2
         {
             Obj_AI_Hero player = playerinfo.GetPlayer();
 
-            DamageLib.StageType stageType = DamageLib.StageType.Default;
-
-            if (ObjectManager.Player.ChampionName == "Ezreal")
-                stageType = DamageLib.StageType.FirstDamage;
-            else if (ObjectManager.Player.ChampionName == "Draven")
-                stageType = DamageLib.StageType.ThirdDamage;
-
-            float ultdamage = (float)DamageLib.getDmg(player, DamageLib.SpellType.R, stageType);
-            float timeneeded = Helper.GetSpellTravelTime(ObjectManager.Player.Spellbook.GetSpell(SpellSlot.R), EnemySpawnPos) + Game.Ping - 170; //increase timeneeded if it should arrive earlier, decrease if later
+            float ultdamage = Ult.GetDamage(player, StageType) * UltDamageReductionMultiplicator;
+            float timeneeded = Helper.GetSpellTravelTime(UltSpeed, UltDelay, EnemySpawnPos) + Game.Ping - 65; //increase timeneeded if it should arrive earlier, decrease if later
 
             if (Helper.GetTargetHealth(playerinfo, timeneeded) > ultdamage)
             {
@@ -169,12 +212,13 @@ namespace BaseUlt2
 
             if (countdown <= timeneeded && !(timeneeded - countdown > 100))
             {
-                if(Helper.CheckNoCollision(EnemySpawnPos.To2D(), player.NetworkId))
+                if(ObjectManager.Player.ChampionName == "Ezreal" || Helper.CheckNoCollision(EnemySpawnPos.To2D(), player.NetworkId, UltWidth, UltDelay, UltSpeed, UltRange)) //dont check champ collision for Ezreal
                 {
                     if (Menu != null && Menu.Item("debugMode").GetValue<bool>())
                         Game.PrintChat("SHOOT {0} (Health: {1} UltDamage: {2} ReactionTime: {3})", playerinfo.GetPlayer().ChampionName, Helper.GetTargetHealth(playerinfo, timeneeded), ultdamage, (timeneeded - countdown));
 
-                    ObjectManager.Player.Spellbook.CastSpell(SpellSlot.R, EnemySpawnPos);
+                    Ult.Cast(EnemySpawnPos, true);
+                    UltCasted = Environment.TickCount;
                 }
                 else if (Menu != null && Menu.Item("debugMode").GetValue<bool>())
                         Game.PrintChat("DONT SHOOT COLLISION {0} (Health: {1} UltDamage: {2})", playerinfo.GetPlayer().ChampionName, Helper.GetTargetHealth(playerinfo, timeneeded), ultdamage);
@@ -185,6 +229,8 @@ namespace BaseUlt2
         {
             foreach (PlayerInfo playerinfo in Players)
             {
+                if (playerinfo == null) continue;
+
                 if (playerinfo.recall.UnitNetworkId == newrecall.UnitNetworkId) //update info if already existing
                 {
                     playerinfo.recall = newrecall;

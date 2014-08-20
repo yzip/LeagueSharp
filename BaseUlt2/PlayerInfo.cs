@@ -13,12 +13,14 @@ namespace BaseUlt2
     {
         public Packet.S2C.Recall.Struct recall;
         public int lastSeen;
+        public Dictionary<String,float> ultDamage;
 
         Obj_AI_Hero player;
 
         public PlayerInfo(Packet.S2C.Recall.Struct recall)
         {
             this.recall = recall;
+            ultDamage = new Dictionary<string, float>();
         }
 
         public Obj_AI_Hero GetPlayer()

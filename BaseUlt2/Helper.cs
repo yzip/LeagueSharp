@@ -17,10 +17,10 @@ namespace BaseUlt2
             return predictedhealth > playerinfo.GetPlayer().MaxHealth ? playerinfo.GetPlayer().MaxHealth : predictedhealth;
         }
 
-        public static float GetSpellTravelTime(float speed, float delay, Vector3 targetpos)
+        public static float GetSpellTravelTime(Obj_AI_Hero source, float speed, float delay, Vector3 targetpos)
         {
-            float distance = Vector3.Distance(ObjectManager.Player.ServerPosition, targetpos);
-            float missilespeed = ObjectManager.Player.ChampionName != "Jinx" ? speed :
+            float distance = Vector3.Distance(source.ServerPosition, targetpos);
+            float missilespeed = source.ChampionName != "Jinx" ? speed :
                 (distance <= 1500f ? speed : (1500f * speed + ((distance - 1500f) * 2200f)) / distance); //1700 = missilespeed, 2200 = missilespeed after acceleration, 1350 acceleration starts, 1500 = fully acceleration
 
             return (distance / missilespeed + Math.Abs(delay)) * 1000;
@@ -142,12 +142,12 @@ namespace BaseUlt2
             return result;
         }
 
-        public static bool CheckNoCollision(Vector2 targetpos, int targetnetid, float width, float delay, float speed, float range)
+        public static bool CheckNoCollision(Vector2 frompos, Vector2 targetpos, int targetnetid, float width, float delay, float speed, float range)
         {
             List<Vector2> collisions = new List<Vector2>();
             collisions.Add(targetpos);
 
-            foreach (Obj_AI_Base unit in from unit in Prediction.GetCollision(ObjectManager.Player.ServerPosition.To2D(), collisions, Prediction.SkillshotType.SkillshotLine, width, delay, speed, range)
+            foreach (Obj_AI_Base unit in from unit in Prediction.GetCollision(frompos, collisions, Prediction.SkillshotType.SkillshotLine, width, delay, speed, range)
                                          where
                                              unit.Type == GameObjectType.obj_AI_Hero &&
                                              unit.IsValid &&

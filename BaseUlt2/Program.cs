@@ -110,7 +110,7 @@ namespace BaseUlt2
             Menu.AddItem(new MenuItem("showRecalls", "Show Recalls").SetValue(true));
             Menu.AddItem(new MenuItem("baseUlt", "Base Ult").SetValue(true));
             Menu.AddItem(new MenuItem("panicKey", "Panic key (hold for disable)").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
-            Menu.AddItem(new MenuItem("extraDelay", "Extra Delay").SetValue(new Slider(0, -500, 500)));
+            Menu.AddItem(new MenuItem("extraDelay", "Extra Delay").SetValue(new Slider(0, -2000, 2000)));
             Menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false));
             //add buffer
 

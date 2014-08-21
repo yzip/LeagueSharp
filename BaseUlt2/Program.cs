@@ -8,7 +8,7 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
 
-namespace BaseUlt2Recode
+namespace BaseUlt2
 {
     class PlayerInfo
     {
@@ -110,6 +110,7 @@ namespace BaseUlt2Recode
             Menu.AddItem(new MenuItem("showRecalls", "Show Recalls").SetValue(true));
             Menu.AddItem(new MenuItem("baseUlt", "Base Ult").SetValue(true));
             Menu.AddItem(new MenuItem("panicKey", "Panic key (hold for disable)").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
+            Menu.AddItem(new MenuItem("extraDelay", "Extra Delay").SetValue(new Slider(0, -500, 500)));
             Menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false));
             //add buffer
 
@@ -153,7 +154,7 @@ namespace BaseUlt2Recode
             foreach (PlayerInfo playerInfo in PlayerInfo.Where(x => x.champ.IsVisible))
                 playerInfo.lastSeen = time;
 
-            if (Menu == null || !Menu.Item("baseUlt").GetValue<bool>()) return;
+            if (!Menu.Item("baseUlt").GetValue<bool>()) return;
 
             foreach (PlayerInfo playerInfo in PlayerInfo.Where(x =>
                 x.champ.IsValid &&
@@ -171,19 +172,19 @@ namespace BaseUlt2Recode
             bool Shoot = false;
 
             foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || Menu.Item(x.ChampionName).GetValue<bool>()) && !x.IsDead && !x.IsStunned &&
-                (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready || (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 && x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed && x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R).Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
+                (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready || (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 && x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed && x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
             {
                 if (champ.ChampionName != "Ezreal" && !CollisionFree(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Range))
                     continue;
 
-                float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) + Game.Ping - (70 + champ.ChampionName == "Jinx" ? 10 : 0); //increase timeneeded if it should arrive earlier, decrease if later | let jinx shoot later so ult does more damage, keppo (calculate that, needs custom health param in DamageLib)
+                float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) + Game.Ping - (Menu.Item("extraDelay").GetValue<Slider>().Value + 70 + champ.ChampionName == "Jinx" ? 10 : 0); //increase timeneeded if it should arrive earlier, decrease if later | let jinx shoot later so ult does more damage, keppo (calculate that, needs custom health param in DamageLib)
 
                 if (timeneeded - playerInfo.GetRecallCountdown() > 100)
                     continue;
 
                 playerInfo.incomingDamage[champ.ChampionName] = (float)GetUltDamage(champ, playerInfo.champ) * UltInfo[champ.ChampionName].DamageMultiplicator;
 
-                if (playerInfo.GetRecallCountdown() <= timeneeded)// && timeneeded - playerInfo.GetRecallCountdown() < 100)
+                if (playerInfo.GetRecallCountdown() <= timeneeded && timeneeded - playerInfo.GetRecallCountdown() < 100)
                     if (champ.IsMe)
                         Shoot = true;
             }
@@ -250,10 +251,10 @@ namespace BaseUlt2Recode
             {
                 Packet.S2C.Recall.Struct newRecall = RecallDecode(args.PacketData);
 
-                PlayerInfo playerinfo = PlayerInfo.Where(x => x.champ.NetworkId == newRecall.UnitNetworkId).FirstOrDefault().UpdateRecall(newRecall); //Packet.S2C.Recall.Decoded(args.PacketData)
+                PlayerInfo playerInfo = PlayerInfo.Where(x => x.champ.NetworkId == newRecall.UnitNetworkId).FirstOrDefault().UpdateRecall(newRecall); //Packet.S2C.Recall.Decoded(args.PacketData)
 
                 if (Menu.Item("debugMode").GetValue<bool>())
-                    Game.PrintChat(playerinfo.champ.ChampionName + ": " + playerinfo.recall.Status);
+                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration);
             }
         }
 

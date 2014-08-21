@@ -50,7 +50,8 @@ namespace BaseUlt2
 
         public int GetRecallCountdown()
         {
-            return GetRecallEnd() - Environment.TickCount;
+            int countdown = GetRecallEnd() - Environment.TickCount;
+            return countdown < 0 ? 0 : countdown;
         }
 
         override public string ToString()
@@ -177,7 +178,7 @@ namespace BaseUlt2
                 if (champ.ChampionName != "Ezreal" && !CollisionFree(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Range))
                     continue;
 
-                float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) + Game.Ping - (Menu.Item("extraDelay").GetValue<Slider>().Value + 70 + champ.ChampionName == "Jinx" ? 10 : 0); //increase timeneeded if it should arrive earlier, decrease if later | let jinx shoot later so ult does more damage, keppo (calculate that, needs custom health param in DamageLib)
+                float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
 
                 if (timeneeded - playerInfo.GetRecallCountdown() > 100)
                     continue;
@@ -199,7 +200,7 @@ namespace BaseUlt2
 
             playerInfo.incomingDamage.Clear(); //wrong placement?
 
-            float targetHealth = GetTargetHealth(playerInfo, playerInfo.GetRecallCountdown());
+            float targetHealth = GetTargetHealth(playerInfo);
 
             int time = Environment.TickCount;
 
@@ -254,13 +255,17 @@ namespace BaseUlt2
                 PlayerInfo playerInfo = PlayerInfo.Where(x => x.champ.NetworkId == newRecall.UnitNetworkId).FirstOrDefault().UpdateRecall(newRecall); //Packet.S2C.Recall.Decoded(args.PacketData)
 
                 if (Menu.Item("debugMode").GetValue<bool>())
-                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration);
+                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration + " guessed health: " + GetTargetHealth(playerInfo) + " lastseen: " + playerInfo.lastSeen + " health: " + playerInfo.champ.Health);
             }
         }
 
-        public static float GetTargetHealth(PlayerInfo playerInfo, float additionalTime)
+        public static float GetTargetHealth(PlayerInfo playerInfo)
         {
-            float predictedhealth = playerInfo.champ.Health + playerInfo.champ.HPRegenRate * ((float)(Environment.TickCount - playerInfo.lastSeen + additionalTime) / 1000f);
+            if (playerInfo.champ.IsVisible)
+                return playerInfo.champ.Health;
+
+            float predictedhealth = playerInfo.champ.Health + playerInfo.champ.HPRegenRate * ((float)(Environment.TickCount - playerInfo.lastSeen + playerInfo.GetRecallCountdown()) / 1000f);
+
             return predictedhealth > playerInfo.champ.MaxHealth ? playerInfo.champ.MaxHealth : predictedhealth;
         }
 

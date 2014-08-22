@@ -158,7 +158,7 @@ namespace BaseUlt2
             if (!Menu.Item("baseUlt").GetValue<bool>()) return;
 
             foreach (PlayerInfo playerInfo in PlayerInfo.Where(x =>
-                x.champ.IsValid &&
+                //x.champ.IsValid &&
                 !x.champ.IsDead &&
                 x.champ.IsEnemy &&
                 x.recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted).OrderBy(x => x.GetRecallEnd()))
@@ -192,7 +192,12 @@ namespace BaseUlt2
             }
 
             if (!Shoot || Menu.Item("panicKey").GetValue<KeyBind>().Active)
+            {
+                if (Menu.Item("debugMode").GetValue<bool>())
+                    Game.PrintChat("!SHOOT/PANICKEY {0}", playerInfo.champ.ChampionName);
+
                 return;
+            }
 
             float totalUltDamage = 0;
 
@@ -209,13 +214,17 @@ namespace BaseUlt2
             {
                 if (totalUltDamage < playerInfo.champ.MaxHealth)
                 {
-                    Game.PrintChat("DONT SHOOT, TOO LONG NO VISION {0} (Health: {1} UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
+                    if (Menu.Item("debugMode").GetValue<bool>())
+                        Game.PrintChat("DONT SHOOT, TOO LONG NO VISION {0} (Health: {1} UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
+
                     return;
                 }
             }
             else if (totalUltDamage < targetHealth)
             {
-                Game.PrintChat("DONT SHOOT {0} (Health: {1} UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
+                if (Menu.Item("debugMode").GetValue<bool>())
+                    Game.PrintChat("DONT SHOOT {0} (Health: {1} UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
+
                 return;
             }
 
@@ -281,7 +290,7 @@ namespace BaseUlt2
 
         public static bool IsCollidingWithChamps(Vector2 frompos, Vector2 targetpos, int targetnetid, float width, float delay, float speed, float range)
         {
-            return !Prediction.GetCollision(frompos, new List<Vector2>() {targetpos}, Prediction.SkillshotType.SkillshotLine, width, delay, speed * 10000, range).Any(); //x => x.NetworkId != targetnetid
+            return !Prediction.GetCollision(frompos, new List<Vector2>() {targetpos}, Prediction.SkillshotType.SkillshotLine, width, delay, speed * 10000, range).Any(); //x => x.NetworkId != targetnetid | speeed*10k because only calc the current positions
         }
 
         public static List<Obj_AI_Base> GetChampCollision(Vector2 from, List<Vector2> To, Prediction.SkillshotType stype, float width, float delay, float speed)

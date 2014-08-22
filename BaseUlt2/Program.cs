@@ -13,7 +13,7 @@ namespace BaseUlt2
     class PlayerInfo
     {
         public Obj_AI_Hero champ;
-        public Dictionary<String, float> incomingDamage;
+        public Dictionary<int, float> incomingDamage;
         public int lastSeen;
         public Packet.S2C.Recall.Struct recall;
 
@@ -21,7 +21,7 @@ namespace BaseUlt2
         {
             this.champ = champ;
             this.recall = new Packet.S2C.Recall.Struct(champ.NetworkId, Packet.S2C.Recall.RecallStatus.Unknown, Packet.S2C.Recall.ObjectType.Player, 0);
-            this.incomingDamage = new Dictionary<string, float>();
+            this.incomingDamage = new Dictionary<int, float>();
         }
 
         public PlayerInfo UpdateRecall(Packet.S2C.Recall.Struct newRecall)
@@ -175,7 +175,8 @@ namespace BaseUlt2
             foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || Menu.Item(x.ChampionName).GetValue<bool>()) && !x.IsDead && !x.IsStunned &&
                 (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready || (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 && x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed && x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
             {
-                if (champ.ChampionName != "Ezreal" && !CollisionFree(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Range))
+                //Add Champ collision, check only current enemy champ pos
+                if (champ.ChampionName != "Ezreal" && !IsCollidingWithChamps(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Range))
                     continue;
 
                 float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
@@ -183,7 +184,7 @@ namespace BaseUlt2
                 if (timeneeded - playerInfo.GetRecallCountdown() > 100)
                     continue;
 
-                playerInfo.incomingDamage[champ.ChampionName] = (float)GetUltDamage(champ, playerInfo.champ) * UltInfo[champ.ChampionName].DamageMultiplicator;
+                playerInfo.incomingDamage[champ.NetworkId] = (float)GetUltDamage(champ, playerInfo.champ) * UltInfo[champ.ChampionName].DamageMultiplicator;
 
                 if (playerInfo.GetRecallCountdown() <= timeneeded && timeneeded - playerInfo.GetRecallCountdown() < 100)
                     if (champ.IsMe)
@@ -278,19 +279,29 @@ namespace BaseUlt2
             return (distance / missilespeed + delay) * 1000;
         }
 
-        public static bool CollisionFree(Vector2 frompos, Vector2 targetpos, int targetnetid, float width, float delay, float speed, float range)
+        public static bool IsCollidingWithChamps(Vector2 frompos, Vector2 targetpos, int targetnetid, float width, float delay, float speed, float range)
         {
-            List<Vector2> collisions = new List<Vector2>();
-            collisions.Add(targetpos);
+            return !Prediction.GetCollision(frompos, new List<Vector2>() {targetpos}, Prediction.SkillshotType.SkillshotLine, width, delay, speed * 10000, range).Any(); //x => x.NetworkId != targetnetid
+        }
 
-            if (Prediction.GetCollision(frompos, collisions, Prediction.SkillshotType.SkillshotLine, width, delay, speed, range).Any(x =>
-                x.Type == GameObjectType.obj_AI_Hero &&
-                x.IsValid &&
-                !x.IsDead &&
-                x.IsVisible && x.NetworkId != targetnetid))
-                return false;
+        public static List<Obj_AI_Base> GetChampCollision(Vector2 from, List<Vector2> To, Prediction.SkillshotType stype, float width, float delay, float speed)
+        {
+            var result = new List<Obj_AI_Base>();
+            delay -= 0.07f + Game.Ping / 1000;
 
-            return true;
+            foreach (var TestPosition in To)
+            {
+                foreach (var collisionObject in ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsValidTarget(float.MaxValue, true)))
+                {
+                    var objectPrediction = Prediction.GetBestPosition(collisionObject, delay, width, speed, from.To3D(), float.MaxValue, false, stype, @from.To3D());
+
+                    if (objectPrediction.Position.To2D().Distance(from, TestPosition, true, true) <= Math.Pow((width + 15 + collisionObject.BoundingRadius), 2))
+                        result.Add(collisionObject);
+                }
+            }
+
+            result = result.Distinct().ToList();
+            return result;
         }
 
         public static Packet.S2C.Recall.Struct RecallDecode(byte[] data)

@@ -149,21 +149,28 @@ namespace BaseUlt2
 
         static void Game_OnGameUpdate(EventArgs args)
         {
-            int time = Environment.TickCount;
-
-            foreach (PlayerInfo playerInfo in PlayerInfo.Where(x => x.champ.IsVisible))
-                playerInfo.lastSeen = time;
-
-            if (!Menu.Item("baseUlt").GetValue<bool>()) return;
-
-            foreach (PlayerInfo playerInfo in PlayerInfo.Where(x =>
-                x.champ.IsValid &&
-                !x.champ.IsDead &&
-                x.champ.IsEnemy &&
-                x.recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted).OrderBy(x => x.GetRecallEnd()))
+            try
             {
-                if (UltCasted == 0 || Environment.TickCount - UltCasted > 15000) //DONT change Environment.TickCount; check for draven ult return
-                    HandleRecallShot(playerInfo);
+                int time = Environment.TickCount;
+
+                foreach (PlayerInfo playerInfo in PlayerInfo.Where(x => x.champ.IsVisible))
+                    playerInfo.lastSeen = time;
+
+                if (!Menu.Item("baseUlt").GetValue<bool>()) return;
+
+                foreach (PlayerInfo playerInfo in PlayerInfo.Where(x =>
+                    x.champ.IsValid &&
+                    !x.champ.IsDead &&
+                    x.champ.IsEnemy &&
+                    x.recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted).OrderBy(x => x.GetRecallEnd()))
+                {
+                    if (UltCasted == 0 || Environment.TickCount - UltCasted > 20000) //DONT change Environment.TickCount; check for draven ult return
+                        HandleRecallShot(playerInfo);
+                }
+            }
+            catch(Exception e)
+            {
+                Game.PrintChat(e.ToString());
             }
         }
 
@@ -174,7 +181,7 @@ namespace BaseUlt2
             foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || GetSafeMenuItem<bool>(Menu.Item(x.ChampionName))) && !x.IsDead && !x.IsStunned &&
                 (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready || (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 && x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed && x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
             {
-                if (champ.ChampionName != "Ezreal" && !IsCollidingWithChamps(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed * 10000, UltInfo[champ.ChampionName].Range)) //speed*10k because only calc the current positions
+                if (champ.ChampionName != "Ezreal" && !IsCollidingWithChamps(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed * 10000)) //speed*10k because only calc the current positions
                     continue;
 
                 float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
@@ -189,22 +196,22 @@ namespace BaseUlt2
                         Shoot = true;
             }
 
-            if (!Shoot || Menu.Item("panicKey").GetValue<KeyBind>().Active)
-            {
-                if (Menu.Item("debugMode").GetValue<bool>())
-                    Game.PrintChat("!SHOOT/PANICKEY {0}", playerInfo.champ.ChampionName);
-
-                return;
-            }
-
             float totalUltDamage = 0;
 
             foreach (float ultdamage in playerInfo.incomingDamage.Values)
                 totalUltDamage += ultdamage;
 
-            playerInfo.incomingDamage.Clear(); //wrong placement?
-
             float targetHealth = GetTargetHealth(playerInfo);
+
+            if (!Shoot || Menu.Item("panicKey").GetValue<KeyBind>().Active)
+            {
+                if (Menu.Item("debugMode").GetValue<bool>())
+                    Game.PrintChat("!SHOOT/PANICKEY {0} (Health: {1} TOTAL-UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
+
+                return;
+            }
+
+            playerInfo.incomingDamage.Clear(); //wrong placement?
 
             int time = Environment.TickCount;
 
@@ -213,7 +220,7 @@ namespace BaseUlt2
                 if (totalUltDamage < playerInfo.champ.MaxHealth)
                 {
                     if (Menu.Item("debugMode").GetValue<bool>())
-                        Game.PrintChat("DONT SHOOT, TOO LONG NO VISION {0} (Health: {1} UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
+                        Game.PrintChat("DONT SHOOT, TOO LONG NO VISION {0} (Health: {1} TOTAL-UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
 
                     return;
                 }
@@ -221,13 +228,13 @@ namespace BaseUlt2
             else if (totalUltDamage < targetHealth)
             {
                 if (Menu.Item("debugMode").GetValue<bool>())
-                    Game.PrintChat("DONT SHOOT {0} (Health: {1} UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
+                    Game.PrintChat("DONT SHOOT {0} (Health: {1} TOTAL-UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
 
                 return;
             }
 
             if (Menu.Item("debugMode").GetValue<bool>())
-                Game.PrintChat("SHOOT {0} (Health: {1} UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
+                Game.PrintChat("SHOOT {0} (Health: {1} TOTAL-UltDamage: {2})", playerInfo.champ.ChampionName, targetHealth, totalUltDamage);
 
             Ult.Cast(EnemySpawnPos, true);
             UltCasted = time;
@@ -263,7 +270,7 @@ namespace BaseUlt2
                 PlayerInfo playerInfo = PlayerInfo.Where(x => x.champ.NetworkId == newRecall.UnitNetworkId).FirstOrDefault().UpdateRecall(newRecall); //Packet.S2C.Recall.Decoded(args.PacketData)
 
                 if (Menu.Item("debugMode").GetValue<bool>())
-                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration + " guessed health: " + GetTargetHealth(playerInfo) + " lastseen: " + playerInfo.lastSeen + " health: " + playerInfo.champ.Health);
+                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration + " guessed health: " + GetTargetHealth(playerInfo) + " lastseen: " + playerInfo.lastSeen + " health: " + playerInfo.champ.Health + " own-ultdamage: " + (float)GetUltDamage(playerInfo.champ, playerInfo.champ) * UltInfo[playerInfo.champ.ChampionName].DamageMultiplicator);
             }
         }
 
@@ -294,9 +301,9 @@ namespace BaseUlt2
             return (distance / missilespeed + delay) * 1000;
         }
 
-        public static bool IsCollidingWithChamps(Vector2 frompos, Vector2 targetpos, int targetnetid, float width, float delay, float speed, float range)
+        public static bool IsCollidingWithChamps(Vector2 frompos, Vector2 targetpos, int targetnetid, float width, float delay, float speed)
         {
-            return !Prediction.GetCollision(frompos, new List<Vector2>() { targetpos }, Prediction.SkillshotType.SkillshotLine, width, delay, speed, range).Any();
+            return !GetChampCollision(frompos, new List<Vector2>() { targetpos }, Prediction.SkillshotType.SkillshotLine, width, delay, speed).Any();
         }
 
         public static List<Obj_AI_Base> GetChampCollision(Vector2 from, List<Vector2> To, Prediction.SkillshotType stype, float width, float delay, float speed)

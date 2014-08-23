@@ -113,7 +113,6 @@ namespace BaseUlt2
             Menu.AddItem(new MenuItem("panicKey", "Panic key (hold for disable)").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
             Menu.AddItem(new MenuItem("extraDelay", "Extra Delay").SetValue(new Slider(0, -2000, 2000)));
             Menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false));
-            //add buffer
 
             Menu TeamUlt = new Menu("Team Baseult Champs", "TeamUlt");
             Menu.AddSubMenu(TeamUlt);
@@ -158,7 +157,7 @@ namespace BaseUlt2
             if (!Menu.Item("baseUlt").GetValue<bool>()) return;
 
             foreach (PlayerInfo playerInfo in PlayerInfo.Where(x =>
-                //x.champ.IsValid &&
+                x.champ.IsValid &&
                 !x.champ.IsDead &&
                 x.champ.IsEnemy &&
                 x.recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted).OrderBy(x => x.GetRecallEnd()))
@@ -172,11 +171,10 @@ namespace BaseUlt2
         {
             bool Shoot = false;
 
-            foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || Menu.Item(x.ChampionName).GetValue<bool>()) && !x.IsDead && !x.IsStunned &&
+            foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || GetSafeMenuItem<bool>(Menu.Item(x.ChampionName))) && !x.IsDead && !x.IsStunned &&
                 (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready || (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 && x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed && x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
             {
-                //Add Champ collision, check only current enemy champ pos
-                if (champ.ChampionName != "Ezreal" && !IsCollidingWithChamps(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Range))
+                if (champ.ChampionName != "Ezreal" && !IsCollidingWithChamps(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed * 10000, UltInfo[champ.ChampionName].Range)) //speed*10k because only calc the current positions
                     continue;
 
                 float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
@@ -269,6 +267,14 @@ namespace BaseUlt2
             }
         }
 
+        public static T GetSafeMenuItem<T>(MenuItem item)
+        {
+            if (item != null)
+                return item.GetValue<T>();
+
+            return default(T);
+        }
+
         public static float GetTargetHealth(PlayerInfo playerInfo)
         {
             if (playerInfo.champ.IsVisible)
@@ -290,7 +296,7 @@ namespace BaseUlt2
 
         public static bool IsCollidingWithChamps(Vector2 frompos, Vector2 targetpos, int targetnetid, float width, float delay, float speed, float range)
         {
-            return !Prediction.GetCollision(frompos, new List<Vector2>() {targetpos}, Prediction.SkillshotType.SkillshotLine, width, delay, speed * 10000, range).Any(); //x => x.NetworkId != targetnetid | speeed*10k because only calc the current positions
+            return !Prediction.GetCollision(frompos, new List<Vector2>() { targetpos }, Prediction.SkillshotType.SkillshotLine, width, delay, speed, range).Any();
         }
 
         public static List<Obj_AI_Base> GetChampCollision(Vector2 from, List<Vector2> To, Prediction.SkillshotType stype, float width, float delay, float speed)

@@ -295,8 +295,22 @@ namespace BaseUlt2
         public static float GetSpellTravelTime(Obj_AI_Hero source, float speed, float delay, Vector3 targetpos)
         {
             float distance = Vector3.Distance(source.ServerPosition, targetpos);
-            float missilespeed = source.ChampionName != "Jinx" ? speed :
-                (distance <= 1500f ? speed : (1500f * speed + ((distance - 1500f) * 2200f)) / distance); //1700 = missilespeed, 2200 = missilespeed after acceleration, 1350 acceleration starts, 1500 = fully acceleration
+
+            float missilespeed = speed;
+
+            if (source.ChampionName == "Jinx" && distance > 1350) //1700 = missilespeed, 2200 = missilespeed after acceleration, 1350 acceleration starts, 1500 = fully acceleration
+            {
+                float accelerationrate = 0.3f; //= (1500f - 1350f) / (2200 - speed), 1 unit = 0.3units/second
+
+                float acceldifference = distance - 1350f;
+
+                if (acceldifference > 150f) //it only accelerates 150 units
+                    acceldifference = 150f;
+
+                float difference = distance - 1500f;
+
+                missilespeed = (1350f * speed + acceldifference * (speed + accelerationrate * acceldifference) + difference * 2200f) / distance;
+            }
 
             return (distance / missilespeed + delay) * 1000;
         }

@@ -181,7 +181,7 @@ namespace BaseUlt2
             foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || GetSafeMenuItem<bool>(Menu.Item(x.ChampionName))) && !x.IsDead && !x.IsStunned &&
                 (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready || (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 && x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed && x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
             {
-                if (champ.ChampionName != "Ezreal" && !IsCollidingWithChamps(champ.ServerPosition.To2D(), EnemySpawnPos.To2D(), playerInfo.champ.NetworkId, UltInfo[champ.ChampionName].Width, UltInfo[champ.ChampionName].Delay, UltInfo[champ.ChampionName].Speed * 10000)) //speed*10k because only calc the current positions
+                if (champ.ChampionName != "Ezreal" && !IsCollidingWithChamps(champ, EnemySpawnPos, UltInfo[champ.ChampionName].Width))
                     continue;
 
                 float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
@@ -315,29 +315,17 @@ namespace BaseUlt2
             return (distance / missilespeed + delay) * 1000;
         }
 
-        public static bool IsCollidingWithChamps(Vector2 frompos, Vector2 targetpos, int targetnetid, float width, float delay, float speed)
+        public static bool IsCollidingWithChamps(Obj_AI_Hero source, Vector3 targetpos, float width)
         {
-            return !GetChampCollision(frompos, new List<Vector2>() { targetpos }, Prediction.SkillshotType.SkillshotLine, width, delay, speed).Any();
-        }
-
-        public static List<Obj_AI_Base> GetChampCollision(Vector2 from, List<Vector2> To, Prediction.SkillshotType stype, float width, float delay, float speed)
-        {
-            var result = new List<Obj_AI_Base>();
-            delay -= 0.07f + Game.Ping / 1000;
-
-            foreach (var TestPosition in To)
+            PredictionInput input = new PredictionInput
             {
-                foreach (var collisionObject in ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsValidTarget(float.MaxValue, true)))
-                {
-                    var objectPrediction = Prediction.GetBestPosition(collisionObject, delay, width, speed, from.To3D(), float.MaxValue, false, stype, @from.To3D());
+                Radius = width,
+                Unit = source,
+            };
 
-                    if (objectPrediction.Position.To2D().Distance(from, TestPosition, true, true) <= Math.Pow((width + 15 + collisionObject.BoundingRadius), 2))
-                        result.Add(collisionObject);
-                }
-            }
+            input.CollisionObjects[0] = CollisionableObjects.Heroes;
 
-            result = result.Distinct().ToList();
-            return result;
+            return LeagueSharp.Common.Collision.GetCollision(new List<Vector3> { targetpos }, input).Any(); //x => x.NetworkId != targetnetid, bit harder to realize with teamult
         }
 
         public static Packet.S2C.Recall.Struct RecallDecode(byte[] data)

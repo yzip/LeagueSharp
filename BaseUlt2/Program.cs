@@ -149,28 +149,21 @@ namespace BaseUlt2
 
         static void Game_OnGameUpdate(EventArgs args)
         {
-            try
+            int time = Environment.TickCount;
+
+            foreach (PlayerInfo playerInfo in PlayerInfo.Where(x => x.champ.IsVisible))
+                playerInfo.lastSeen = time;
+
+            if (!Menu.Item("baseUlt").GetValue<bool>()) return;
+
+            foreach (PlayerInfo playerInfo in PlayerInfo.Where(x =>
+                x.champ.IsValid &&
+                !x.champ.IsDead &&
+                x.champ.IsEnemy &&
+                x.recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted).OrderBy(x => x.GetRecallEnd()))
             {
-                int time = Environment.TickCount;
-
-                foreach (PlayerInfo playerInfo in PlayerInfo.Where(x => x.champ.IsVisible))
-                    playerInfo.lastSeen = time;
-
-                if (!Menu.Item("baseUlt").GetValue<bool>()) return;
-
-                foreach (PlayerInfo playerInfo in PlayerInfo.Where(x =>
-                    x.champ.IsValid &&
-                    !x.champ.IsDead &&
-                    x.champ.IsEnemy &&
-                    x.recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted).OrderBy(x => x.GetRecallEnd()))
-                {
-                    if (UltCasted == 0 || Environment.TickCount - UltCasted > 20000) //DONT change Environment.TickCount; check for draven ult return
-                        HandleRecallShot(playerInfo);
-                }
-            }
-            catch(Exception e)
-            {
-                Game.PrintChat(e.ToString());
+                if (UltCasted == 0 || Environment.TickCount - UltCasted > 20000) //DONT change Environment.TickCount; check for draven ult return
+                    HandleRecallShot(playerInfo);
             }
         }
 
@@ -181,7 +174,7 @@ namespace BaseUlt2
             foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || GetSafeMenuItem<bool>(Menu.Item(x.ChampionName))) && !x.IsDead && !x.IsStunned &&
                 (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready || (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 && x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed && x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
             {
-                if (champ.ChampionName != "Ezreal" && !IsCollidingWithChamps(champ, EnemySpawnPos, UltInfo[champ.ChampionName].Width))
+                if (champ.ChampionName != "Ezreal" && IsCollidingWithChamps(champ, EnemySpawnPos, UltInfo[champ.ChampionName].Width))
                     continue;
 
                 float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
@@ -267,10 +260,10 @@ namespace BaseUlt2
             {
                 Packet.S2C.Recall.Struct newRecall = RecallDecode(args.PacketData);
 
-                PlayerInfo playerInfo = PlayerInfo.Where(x => x.champ.NetworkId == newRecall.UnitNetworkId).FirstOrDefault().UpdateRecall(newRecall); //Packet.S2C.Recall.Decoded(args.PacketData)
+                PlayerInfo playerInfo = PlayerInfo.First(x => x.champ.NetworkId == newRecall.UnitNetworkId).UpdateRecall(newRecall); //Packet.S2C.Recall.Decoded(args.PacketData)
 
                 if (Menu.Item("debugMode").GetValue<bool>())
-                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration + " guessed health: " + GetTargetHealth(playerInfo) + " lastseen: " + playerInfo.lastSeen + " health: " + playerInfo.champ.Health + " own-ultdamage: " + (float)GetUltDamage(playerInfo.champ, playerInfo.champ) * UltInfo[playerInfo.champ.ChampionName].DamageMultiplicator);
+                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration + " guessed health: " + GetTargetHealth(playerInfo) + " lastseen: " + playerInfo.lastSeen + " health: " + playerInfo.champ.Health + " own-ultdamage: " + (float)GetUltDamage(ObjectManager.Player, playerInfo.champ) * UltInfo[ObjectManager.Player.ChampionName].DamageMultiplicator);
             }
         }
 
@@ -462,7 +455,7 @@ namespace BaseUlt2
             double additionaldmg = 0;
             if (doubleedgedsword)
             {
-                if (ObjectManager.Player.CombatType == GameObjectCombatType.Melee)
+                if (source.CombatType == GameObjectCombatType.Melee)
                 {
                     additionaldmg += dmg * 0.02;
                 }
@@ -540,7 +533,7 @@ namespace BaseUlt2
             double additionaldmg = 0;
             if (doubleedgedsword)
             {
-                if (ObjectManager.Player.CombatType == GameObjectCombatType.Melee)
+                if (source.CombatType == GameObjectCombatType.Melee)
                 {
                     additionaldmg = dmg * 0.02;
                 }

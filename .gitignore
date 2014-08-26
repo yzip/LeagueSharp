@@ -9,10 +9,10 @@
 # Build results
 
 [Dd]ebug/
-[Rr]elease/
+#[Rr]elease/
 x64/
 build/
-[Bb]in/
+#[Bb]in/
 [Oo]bj/
 
 # Enable "build/" folder in the NuGet Packages folder since NuGet packages use it for MSBuild targets
@@ -21,6 +21,11 @@ build/
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
+
+*.vshost.exe*
+*.exe.config
+SharpDX.*
+LeagueSharp.*
 
 *_i.c
 *_p.c
@@ -154,3 +159,4 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+recall.png

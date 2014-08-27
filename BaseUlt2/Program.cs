@@ -149,7 +149,7 @@ namespace BaseUlt2
 
             int time = Environment.TickCount;
 
-            if (time - playerInfo.lastSeen > 15000 && !Menu.Item("regardlessKey").GetValue<KeyBind>().Active)
+            if (time - playerInfo.lastSeen > 20000 && !Menu.Item("regardlessKey").GetValue<KeyBind>().Active)
             {
                 if (totalUltDamage < playerInfo.champ.MaxHealth)
                 {

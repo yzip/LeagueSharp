@@ -120,12 +120,12 @@ namespace BaseUlt2
 
                 float timeneeded = Helper.GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
 
-                if (timeneeded - playerInfo.GetRecallCountdown() > 100)
+                if (timeneeded - playerInfo.GetRecallCountdown() > 60)
                     continue;
 
                 playerInfo.incomingDamage[champ.NetworkId] = (float)Helper.GetUltDamage(champ, playerInfo.champ) * UltInfo[champ.ChampionName].DamageMultiplicator;
 
-                if (playerInfo.GetRecallCountdown() <= timeneeded && timeneeded - playerInfo.GetRecallCountdown() < 100)
+                if (playerInfo.GetRecallCountdown() <= timeneeded)
                     if (champ.IsMe)
                         Shoot = true;
             }

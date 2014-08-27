@@ -116,7 +116,7 @@ namespace BaseUlt2
                         Program.RecallT[recall.UnitNetworkId] = time;
                     else
                     {
-                        if (time - Program.RecallT[recall.UnitNetworkId] > recall.Duration - 60)
+                        if (time - Program.RecallT[recall.UnitNetworkId] > recall.Duration - 75)
                             recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportEnd : Packet.S2C.Recall.RecallStatus.RecallFinished;
                         else
                             recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportAbort : Packet.S2C.Recall.RecallStatus.RecallAborted;

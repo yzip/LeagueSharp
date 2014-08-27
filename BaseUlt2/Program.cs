@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Diagnostics;
 
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -10,63 +9,6 @@ using SharpDX;
 
 namespace BaseUlt2
 {
-    class PlayerInfo
-    {
-        public Obj_AI_Hero champ;
-        public Dictionary<int, float> incomingDamage;
-        public int lastSeen;
-        public Packet.S2C.Recall.Struct recall;
-
-        public PlayerInfo(Obj_AI_Hero champ)
-        {
-            this.champ = champ;
-            this.recall = new Packet.S2C.Recall.Struct(champ.NetworkId, Packet.S2C.Recall.RecallStatus.Unknown, Packet.S2C.Recall.ObjectType.Player, 0);
-            this.incomingDamage = new Dictionary<int, float>();
-        }
-
-        public PlayerInfo UpdateRecall(Packet.S2C.Recall.Struct newRecall)
-        {
-            this.recall = newRecall;
-            return this;
-        }
-
-        public int GetRecallStart()
-        {
-            switch ((int)recall.Status)
-            {
-                case (int)Packet.S2C.Recall.RecallStatus.RecallStarted:
-                case (int)Packet.S2C.Recall.RecallStatus.TeleportStart:
-                    return Program.RecallT[recall.UnitNetworkId];
-
-                default:
-                    return 0;
-            }
-        }
-
-        public int GetRecallEnd()
-        {
-            return GetRecallStart() + recall.Duration;
-        }
-
-        public int GetRecallCountdown()
-        {
-            int countdown = GetRecallEnd() - Environment.TickCount;
-            return countdown < 0 ? 0 : countdown;
-        }
-
-        override public string ToString()
-        {
-            string drawtext = champ.ChampionName + ": " + recall.Status; //change to better string
-
-            float countdown = (float)GetRecallCountdown() / 1000f;
-
-            if (countdown > 0)
-                drawtext += " (" + countdown.ToString("0.00") + "s)";
-
-            return drawtext;
-        }
-    }
-
     class Program
     {
         static Menu Menu;
@@ -74,10 +16,10 @@ namespace BaseUlt2
         static IEnumerable<Obj_AI_Hero> OwnTeam;
         static IEnumerable<Obj_AI_Hero> EnemyTeam;
         static Vector3 EnemySpawnPos;
-        static Utility.Map.MapType Map;
+        public static Utility.Map.MapType Map;
         static List<PlayerInfo> PlayerInfo = new List<PlayerInfo>();
         public static Dictionary<int, int> RecallT = new Dictionary<int, int>();
-        static int UltCasted = 0;
+        static int UltCasted;
         static Spell Ult;
 
         struct UltData
@@ -114,26 +56,24 @@ namespace BaseUlt2
             Menu.AddItem(new MenuItem("extraDelay", "Extra Delay").SetValue(new Slider(0, -2000, 2000)));
             Menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false));
 
-            Menu TeamUlt = new Menu("Team Baseult Champs", "TeamUlt");
+            Menu TeamUlt = new Menu("Team Baseult Friends", "TeamUlt");
             Menu.AddSubMenu(TeamUlt);
 
             IEnumerable<Obj_AI_Hero> Champions = ObjectManager.Get<Obj_AI_Hero>();
 
-            CompatibleChamp = IsCompatibleChamp(ObjectManager.Player.ChampionName);
+            CompatibleChamp = Helper.IsCompatibleChamp(ObjectManager.Player.ChampionName);
 
             OwnTeam = Champions.Where(x => x.IsAlly);
             EnemyTeam = Champions.Where(x => x.IsEnemy);
 
-            foreach (Obj_AI_Hero champ in OwnTeam.Where(x => !x.IsMe && IsCompatibleChamp(x.ChampionName)))
+            foreach (Obj_AI_Hero champ in OwnTeam.Where(x => !x.IsMe && Helper.IsCompatibleChamp(x.ChampionName)))
                 TeamUlt.AddItem(new MenuItem(champ.ChampionName, champ.ChampionName + " friend with Baseult?").SetValue(false).DontSave());
 
             EnemySpawnPos = ObjectManager.Get<GameObject>().First(x => x.Type == GameObjectType.obj_SpawnPoint && x.Team != ObjectManager.Player.Team).Position;
 
             Map = Utility.Map.GetMap();
 
-            foreach (Obj_AI_Hero champ in EnemyTeam)
-                PlayerInfo.Add(new PlayerInfo(champ));
-
+            PlayerInfo = EnemyTeam.Select(x => new PlayerInfo(x)).ToList();
             PlayerInfo.Add(new PlayerInfo(ObjectManager.Player));
 
             Ult = new Spell(SpellSlot.R, 20000f);
@@ -171,18 +111,18 @@ namespace BaseUlt2
         {
             bool Shoot = false;
 
-            foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || GetSafeMenuItem<bool>(Menu.Item(x.ChampionName))) && !x.IsDead && !x.IsStunned &&
+            foreach (Obj_AI_Hero champ in OwnTeam.Where(x => x.IsValid && (x.IsMe || Helper.GetSafeMenuItem<bool>(Menu.Item(x.ChampionName))) && !x.IsDead && !x.IsStunned &&
                 (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready || (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 && x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed && x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
             {
-                if (champ.ChampionName != "Ezreal" && IsCollidingWithChamps(champ, EnemySpawnPos, UltInfo[champ.ChampionName].Width))
+                if (champ.ChampionName != "Ezreal" && Helper.IsCollidingWithChamps(champ, EnemySpawnPos, UltInfo[champ.ChampionName].Width))
                     continue;
 
-                float timeneeded = GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
+                float timeneeded = Helper.GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, EnemySpawnPos) - (Menu.Item("extraDelay").GetValue<Slider>().Value + 65); //increase timeneeded if it should arrive earlier, decrease if later
 
                 if (timeneeded - playerInfo.GetRecallCountdown() > 100)
                     continue;
 
-                playerInfo.incomingDamage[champ.NetworkId] = (float)GetUltDamage(champ, playerInfo.champ) * UltInfo[champ.ChampionName].DamageMultiplicator;
+                playerInfo.incomingDamage[champ.NetworkId] = (float)Helper.GetUltDamage(champ, playerInfo.champ) * UltInfo[champ.ChampionName].DamageMultiplicator;
 
                 if (playerInfo.GetRecallCountdown() <= timeneeded && timeneeded - playerInfo.GetRecallCountdown() < 100)
                     if (champ.IsMe)
@@ -194,7 +134,7 @@ namespace BaseUlt2
             foreach (float ultdamage in playerInfo.incomingDamage.Values)
                 totalUltDamage += ultdamage;
 
-            float targetHealth = GetTargetHealth(playerInfo);
+            float targetHealth = Helper.GetTargetHealth(playerInfo);
 
             if (!Shoot || Menu.Item("panicKey").GetValue<KeyBind>().Active)
             {
@@ -243,6 +183,7 @@ namespace BaseUlt2
                 (x.recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted || x.recall.Status == Packet.S2C.Recall.RecallStatus.TeleportStart) &&
                 x.champ.IsValid &&
                 !x.champ.IsDead &&
+                x.GetRecallCountdown() > 0 && 
                 (x.champ.IsEnemy || Menu.Item("debugMode").GetValue<bool>())).OrderBy(x => x.GetRecallEnd()))
             {
                 index++;
@@ -258,322 +199,13 @@ namespace BaseUlt2
         {
             if (args.PacketData[0] == Packet.S2C.Recall.Header)
             {
-                Packet.S2C.Recall.Struct newRecall = RecallDecode(args.PacketData);
+                Packet.S2C.Recall.Struct newRecall = Helper.RecallDecode(args.PacketData);
 
                 PlayerInfo playerInfo = PlayerInfo.First(x => x.champ.NetworkId == newRecall.UnitNetworkId).UpdateRecall(newRecall); //Packet.S2C.Recall.Decoded(args.PacketData)
 
                 if (Menu.Item("debugMode").GetValue<bool>())
-                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration + " guessed health: " + GetTargetHealth(playerInfo) + " lastseen: " + playerInfo.lastSeen + " health: " + playerInfo.champ.Health + " own-ultdamage: " + (float)GetUltDamage(ObjectManager.Player, playerInfo.champ) * UltInfo[ObjectManager.Player.ChampionName].DamageMultiplicator);
+                    Game.PrintChat(playerInfo.champ.ChampionName + ": " + playerInfo.recall.Status + " duration: " + playerInfo.recall.Duration + " guessed health: " + Helper.GetTargetHealth(playerInfo) + " lastseen: " + playerInfo.lastSeen + " health: " + playerInfo.champ.Health + " own-ultdamage: " + (float)Helper.GetUltDamage(ObjectManager.Player, playerInfo.champ) * UltInfo[ObjectManager.Player.ChampionName].DamageMultiplicator);
             }
-        }
-
-        public static T GetSafeMenuItem<T>(MenuItem item)
-        {
-            if (item != null)
-                return item.GetValue<T>();
-
-            return default(T);
-        }
-
-        public static float GetTargetHealth(PlayerInfo playerInfo)
-        {
-            if (playerInfo.champ.IsVisible)
-                return playerInfo.champ.Health;
-
-            float predictedhealth = playerInfo.champ.Health + playerInfo.champ.HPRegenRate * ((float)(Environment.TickCount - playerInfo.lastSeen + playerInfo.GetRecallCountdown()) / 1000f);
-
-            return predictedhealth > playerInfo.champ.MaxHealth ? playerInfo.champ.MaxHealth : predictedhealth;
-        }
-
-        public static float GetSpellTravelTime(Obj_AI_Hero source, float speed, float delay, Vector3 targetpos)
-        {
-            float distance = Vector3.Distance(source.ServerPosition, targetpos);
-
-            float missilespeed = speed;
-
-            if (source.ChampionName == "Jinx" && distance > 1350) //1700 = missilespeed, 2200 = missilespeed after acceleration, 1350 acceleration starts, 1500 = fully acceleration
-            {
-                float accelerationrate = 0.3f; //= (1500f - 1350f) / (2200 - speed), 1 unit = 0.3units/second
-
-                float acceldifference = distance - 1350f;
-
-                if (acceldifference > 150f) //it only accelerates 150 units
-                    acceldifference = 150f;
-
-                float difference = distance - 1500f;
-
-                missilespeed = (1350f * speed + acceldifference * (speed + accelerationrate * acceldifference) + difference * 2200f) / distance;
-            }
-
-            return (distance / missilespeed + delay) * 1000;
-        }
-
-        public static bool IsCollidingWithChamps(Obj_AI_Hero source, Vector3 targetpos, float width)
-        {
-            PredictionInput input = new PredictionInput
-            {
-                Radius = width,
-                Unit = source,
-            };
-
-            input.CollisionObjects[0] = CollisionableObjects.Heroes;
-
-            return LeagueSharp.Common.Collision.GetCollision(new List<Vector3> { targetpos }, input).Any(); //x => x.NetworkId != targetnetid, bit harder to realize with teamult
-        }
-
-        public static Packet.S2C.Recall.Struct RecallDecode(byte[] data)
-        {
-            BinaryReader reader = new BinaryReader(new MemoryStream(data));
-            Packet.S2C.Recall.Struct recall = new Packet.S2C.Recall.Struct();
-
-            reader.ReadByte(); //PacketId
-            reader.ReadInt32();
-            recall.UnitNetworkId = reader.ReadInt32();
-            reader.ReadBytes(66);
-
-            recall.Status = Packet.S2C.Recall.RecallStatus.Unknown;
-
-            bool teleport = false;
-
-            if (BitConverter.ToString(reader.ReadBytes(6)) != "00-00-00-00-00-00")
-            {
-                if (BitConverter.ToString(reader.ReadBytes(3)) != "00-00-00")
-                {
-                    recall.Status = Packet.S2C.Recall.RecallStatus.TeleportStart;
-                    teleport = true;
-                }
-                else
-                    recall.Status = Packet.S2C.Recall.RecallStatus.RecallStarted;
-            }
-
-            reader.Close();
-
-            Obj_AI_Hero champ = ObjectManager.GetUnitByNetworkId<Obj_AI_Hero>(recall.UnitNetworkId);
-
-            recall.Duration = 0;
-
-            if (champ != null)
-            {
-                if (teleport)
-                    recall.Duration = 3500;
-                else //use masteries to detect recall duration, because spelldata is not initialized yet when enemy has not been seen
-                {
-                    recall.Duration = Map == Utility.Map.MapType.CrystalScar ? 4500 : 8000;
-
-                    if (champ.Masteries.Any(x => x.Page == MasteryPage.Utility && x.Id == 65 && x.Points == 1))
-                        recall.Duration -= Map == Utility.Map.MapType.CrystalScar ? 500 : 1000; //phasewalker mastery
-                }
-
-                int time = Environment.TickCount - Game.Ping;
-
-                if (!RecallT.ContainsKey(recall.UnitNetworkId))
-                    RecallT.Add(recall.UnitNetworkId, time); //will result in status RecallStarted, which would be wrong if the assembly was to be loaded while somebody recalls
-                else
-                {
-                    if (RecallT[recall.UnitNetworkId] == 0)
-                        RecallT[recall.UnitNetworkId] = time;
-                    else
-                    {
-                        if (time - RecallT[recall.UnitNetworkId] > recall.Duration - 75)
-                            recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportEnd : Packet.S2C.Recall.RecallStatus.RecallFinished;
-                        else
-                            recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportAbort : Packet.S2C.Recall.RecallStatus.RecallAborted;
-
-                        Program.RecallT[recall.UnitNetworkId] = 0; //recall aborted or finished, reset status
-                    }
-                }
-            }
-
-            return recall;
-        }
-
-        static bool IsCompatibleChamp(String championName)
-        {
-            switch (championName)
-            {
-                case "Ashe":
-                case "Ezreal":
-                case "Draven":
-                case "Jinx":
-                    return true;
-
-                default:
-                    return false;
-            }
-        }
-
-        static double GetUltDamage(Obj_AI_Hero source, Obj_AI_Hero enemy)
-        {
-            switch (source.ChampionName)
-            {
-                case "Ashe":
-                    return CalcMagicDmg((75 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 175)) + (1.0 * source.FlatMagicDamageMod), source, enemy);
-                case "Draven":
-                    return CalcPhysicalDmg((75 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 100)) + (1.1 * source.FlatPhysicalDamageMod), source, enemy); // way to enemy
-                case "Jinx":
-                    var percentage = CalcPhysicalDmg(((enemy.MaxHealth - enemy.Health) / 100) * (20 + (5 * source.Spellbook.GetSpell(SpellSlot.R).Level)), source, enemy);
-                    return percentage + CalcPhysicalDmg((150 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 100)) + (1.0 * source.FlatPhysicalDamageMod), source, enemy);
-                case "Ezreal":
-                    return CalcMagicDmg((200 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 150)) +
-                        (1.0 * (source.FlatPhysicalDamageMod + source.BaseAttackDamage)) +
-                        (0.9 * source.FlatMagicDamageMod), source, enemy);
-                default:
-                    return 0;
-            }
-        }
-
-        public static double CalcPhysicalDmg(double dmg, Obj_AI_Hero source, Obj_AI_Base enemy)
-        {
-            bool doubleedgedsword = false, havoc = false, arcaneblade = false, butcher = false;
-            int executioner = 0;
-
-            foreach (var mastery in source.Masteries)
-            {
-                if (mastery.Page == MasteryPage.Offense)
-                {
-                    switch (mastery.Id)
-                    {
-                        case 65:
-                            doubleedgedsword = (mastery.Points == 1);
-                            break;
-                        case 146:
-                            havoc = (mastery.Points == 1);
-                            break;
-                        case 132:
-                            arcaneblade = (mastery.Points == 1);
-                            break;
-                        case 100:
-                            executioner = mastery.Points;
-                            break;
-                        case 68:
-                            butcher = (mastery.Points == 1);
-                            break;
-                    }
-                }
-            }
-
-            double additionaldmg = 0;
-            if (doubleedgedsword)
-            {
-                if (source.CombatType == GameObjectCombatType.Melee)
-                {
-                    additionaldmg += dmg * 0.02;
-                }
-                else
-                {
-                    additionaldmg += dmg * 0.015;
-                }
-            }
-
-            if (havoc)
-            {
-                additionaldmg += dmg * 0.03;
-            }
-
-            if (executioner > 0)
-            {
-                if (executioner == 1)
-                {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 20)
-                    {
-                        additionaldmg += dmg * 0.05;
-                    }
-                }
-                else if (executioner == 2)
-                {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 35)
-                    {
-                        additionaldmg += dmg * 0.05;
-                    }
-                }
-                else if (executioner == 3)
-                {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 50)
-                    {
-                        additionaldmg += dmg * 0.05;
-                    }
-                }
-            }
-
-            double newarmor = enemy.Armor * ObjectManager.Player.PercentArmorPenetrationMod;
-            var dmgreduction = 100 / (100 + newarmor - ObjectManager.Player.FlatArmorPenetrationMod);
-            return (((dmg + additionaldmg) * dmgreduction));
-        }
-
-        public static double CalcMagicDmg(double dmg, Obj_AI_Hero source, Obj_AI_Base enemy)
-        {
-            bool doubleedgedsword = false, havoc = false, arcaneblade = false, butcher = false;
-            int executioner = 0;
-
-            foreach (var mastery in source.Masteries)
-            {
-                if (mastery.Page == MasteryPage.Offense)
-                {
-                    switch (mastery.Id)
-                    {
-                        case 65:
-                            doubleedgedsword = (mastery.Points == 1);
-                            break;
-                        case 146:
-                            havoc = (mastery.Points == 1);
-                            break;
-                        case 132:
-                            arcaneblade = (mastery.Points == 1);
-                            break;
-                        case 100:
-                            executioner = mastery.Points;
-                            break;
-                        case 68:
-                            butcher = (mastery.Points == 1);
-                            break;
-                    }
-                }
-            }
-
-            double additionaldmg = 0;
-            if (doubleedgedsword)
-            {
-                if (source.CombatType == GameObjectCombatType.Melee)
-                {
-                    additionaldmg = dmg * 0.02;
-                }
-                else
-                {
-                    additionaldmg = dmg * 0.015;
-                }
-            }
-            if (havoc)
-            {
-                additionaldmg += dmg * 0.03;
-            }
-            if (executioner > 0)
-            {
-                if (executioner == 1)
-                {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 20)
-                    {
-                        additionaldmg += dmg * 0.05;
-                    }
-                }
-                else if (executioner == 2)
-                {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 35)
-                    {
-                        additionaldmg += dmg * 0.05;
-                    }
-                }
-                else if (executioner == 3)
-                {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 50)
-                    {
-                        additionaldmg += dmg * 0.05;
-                    }
-                }
-            }
-
-            double newspellblock = enemy.SpellBlock * source.PercentMagicPenetrationMod;
-            var dmgreduction = 100 / (100 + newspellblock - source.FlatMagicPenetrationMod);
-            return (((dmg + additionaldmg) * dmgreduction));
         }
     }
 }

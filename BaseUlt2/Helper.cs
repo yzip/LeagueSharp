@@ -94,8 +94,6 @@ namespace BaseUlt2
 
             Obj_AI_Hero champ = ObjectManager.GetUnitByNetworkId<Obj_AI_Hero>(recall.UnitNetworkId);
 
-            recall.Duration = 0;
-
             if (champ != null)
             {
                 if (teleport)
@@ -118,7 +116,7 @@ namespace BaseUlt2
                         Program.RecallT[recall.UnitNetworkId] = time;
                     else
                     {
-                        if (time - Program.RecallT[recall.UnitNetworkId] > recall.Duration - 75)
+                        if (time - Program.RecallT[recall.UnitNetworkId] > recall.Duration - 60)
                             recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportEnd : Packet.S2C.Recall.RecallStatus.RecallFinished;
                         else
                             recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportAbort : Packet.S2C.Recall.RecallStatus.RecallAborted;

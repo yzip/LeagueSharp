@@ -52,8 +52,9 @@ namespace BaseUlt2
             Menu.AddToMainMenu();
             Menu.AddItem(new MenuItem("showRecalls", "Show Recalls").SetValue(true));
             Menu.AddItem(new MenuItem("baseUlt", "Base Ult").SetValue(true));
-            Menu.AddItem(new MenuItem("panicKey", "Panic key (hold for disable)").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
             Menu.AddItem(new MenuItem("extraDelay", "Extra Delay").SetValue(new Slider(0, -2000, 2000)));
+            Menu.AddItem(new MenuItem("panicKey", "Panic key (hold for disable)").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
+            Menu.AddItem(new MenuItem("regardlessKey", "No timelimit (hold)").SetValue(new KeyBind(17, KeyBindType.Press))); //17 == ctrl
             Menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false));
 
             Menu TeamUlt = new Menu("Team Baseult Friends", "TeamUlt");
@@ -148,7 +149,7 @@ namespace BaseUlt2
 
             int time = Environment.TickCount;
 
-            if (time - playerInfo.lastSeen > 15000)
+            if (time - playerInfo.lastSeen > 15000 && !Menu.Item("regardlessKey").GetValue<KeyBind>().Active)
             {
                 if (totalUltDamage < playerInfo.champ.MaxHealth)
                 {

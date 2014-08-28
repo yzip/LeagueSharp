@@ -1,39 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using LeagueSharp;
 using LeagueSharp.Common;
-using SharpDX;
 
 namespace BaseUlt2
 {
-    class PlayerInfo
+    internal class PlayerInfo
     {
-        public Obj_AI_Hero champ;
-        public Dictionary<int, float> incomingDamage;
-        public int lastSeen;
-        public Packet.S2C.Recall.Struct recall;
+        public Obj_AI_Hero Champ;
+        public Dictionary<int, float> IncomingDamage;
+        public int LastSeen;
+        public Packet.S2C.Recall.Struct Recall;
 
         public PlayerInfo(Obj_AI_Hero champ)
         {
-            this.champ = champ;
-            this.recall = new Packet.S2C.Recall.Struct(champ.NetworkId, Packet.S2C.Recall.RecallStatus.Unknown, Packet.S2C.Recall.ObjectType.Player, 0);
-            this.incomingDamage = new Dictionary<int, float>();
+            Champ = champ;
+            Recall = new Packet.S2C.Recall.Struct(champ.NetworkId, Packet.S2C.Recall.RecallStatus.Unknown, Packet.S2C.Recall.ObjectType.Player, 0);
+            IncomingDamage = new Dictionary<int, float>();
         }
 
         public PlayerInfo UpdateRecall(Packet.S2C.Recall.Struct newRecall)
         {
-            this.recall = newRecall;
+            Recall = newRecall;
             return this;
         }
 
         public int GetRecallStart()
         {
-            switch ((int)recall.Status)
+            switch ((int) Recall.Status)
             {
-                case (int)Packet.S2C.Recall.RecallStatus.RecallStarted:
-                case (int)Packet.S2C.Recall.RecallStatus.TeleportStart:
-                    return Program.RecallT[recall.UnitNetworkId];
+                case (int) Packet.S2C.Recall.RecallStatus.RecallStarted:
+                case (int) Packet.S2C.Recall.RecallStatus.TeleportStart:
+                    return Program.RecallT[Recall.UnitNetworkId];
 
                 default:
                     return 0;
@@ -42,7 +40,7 @@ namespace BaseUlt2
 
         public int GetRecallEnd()
         {
-            return GetRecallStart() + recall.Duration;
+            return GetRecallStart() + Recall.Duration;
         }
 
         public int GetRecallCountdown()
@@ -51,11 +49,11 @@ namespace BaseUlt2
             return countdown < 0 ? 0 : countdown;
         }
 
-        override public string ToString()
+        public override string ToString()
         {
-            string drawtext = champ.ChampionName + ": " + recall.Status; //change to better string
+            string drawtext = Champ.ChampionName + ": " + Recall.Status; //change to better string
 
-            float countdown = (float)GetRecallCountdown() / 1000f;
+            float countdown = GetRecallCountdown()/1000f;
 
             if (countdown > 0)
                 drawtext += " (" + countdown.ToString("0.00") + "s)";

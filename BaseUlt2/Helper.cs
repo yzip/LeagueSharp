@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-
+using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+using Collision = LeagueSharp.Common.Collision;
 
 namespace BaseUlt2
 {
-    class Helper
+    internal class Helper
     {
         public static T GetSafeMenuItem<T>(MenuItem item)
         {
@@ -21,12 +21,12 @@ namespace BaseUlt2
 
         public static float GetTargetHealth(PlayerInfo playerInfo)
         {
-            if (playerInfo.champ.IsVisible)
-                return playerInfo.champ.Health;
+            if (playerInfo.Champ.IsVisible)
+                return playerInfo.Champ.Health;
 
-            float predictedhealth = playerInfo.champ.Health + playerInfo.champ.HPRegenRate * ((float)(Environment.TickCount - playerInfo.lastSeen + playerInfo.GetRecallCountdown()) / 1000f);
+            float predictedhealth = playerInfo.Champ.Health + playerInfo.Champ.HPRegenRate* ((Environment.TickCount - playerInfo.LastSeen + playerInfo.GetRecallCountdown())/1000f);
 
-            return predictedhealth > playerInfo.champ.MaxHealth ? playerInfo.champ.MaxHealth : predictedhealth;
+            return predictedhealth > playerInfo.Champ.MaxHealth ? playerInfo.Champ.MaxHealth : predictedhealth;
         }
 
         public static float GetSpellTravelTime(Obj_AI_Hero source, float speed, float delay, Vector3 targetpos)
@@ -46,15 +46,15 @@ namespace BaseUlt2
 
                 float difference = distance - 1500f;
 
-                missilespeed = (1350f * speed + acceldifference * (speed + accelerationrate * acceldifference) + difference * 2200f) / distance;
+                missilespeed = (1350f*speed + acceldifference*(speed + accelerationrate*acceldifference) + difference*2200f)/distance;
             }
 
-            return (distance / missilespeed + delay) * 1000;
+            return (distance/missilespeed + delay)*1000;
         }
 
         public static bool IsCollidingWithChamps(Obj_AI_Hero source, Vector3 targetpos, float width)
         {
-            PredictionInput input = new PredictionInput
+            var input = new PredictionInput
             {
                 Radius = width,
                 Unit = source,
@@ -62,13 +62,13 @@ namespace BaseUlt2
 
             input.CollisionObjects[0] = CollisionableObjects.Heroes;
 
-            return LeagueSharp.Common.Collision.GetCollision(new List<Vector3> { targetpos }, input).Any(); //x => x.NetworkId != targetnetid, bit harder to realize with teamult
+            return Collision.GetCollision(new List<Vector3> {targetpos}, input).Any(); //x => x.NetworkId != targetnetid, bit harder to realize with teamult
         }
 
         public static Packet.S2C.Recall.Struct RecallDecode(byte[] data)
         {
-            BinaryReader reader = new BinaryReader(new MemoryStream(data));
-            Packet.S2C.Recall.Struct recall = new Packet.S2C.Recall.Struct();
+            var reader = new BinaryReader(new MemoryStream(data));
+            var recall = new Packet.S2C.Recall.Struct();
 
             reader.ReadByte(); //PacketId
             reader.ReadInt32();
@@ -92,7 +92,7 @@ namespace BaseUlt2
 
             reader.Close();
 
-            Obj_AI_Hero champ = ObjectManager.GetUnitByNetworkId<Obj_AI_Hero>(recall.UnitNetworkId);
+            var champ = ObjectManager.GetUnitByNetworkId<Obj_AI_Hero>(recall.UnitNetworkId);
 
             if (champ != null)
             {
@@ -149,16 +149,28 @@ namespace BaseUlt2
             switch (source.ChampionName)
             {
                 case "Ashe":
-                    return CalcMagicDmg((75 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 175)) + (1.0 * source.FlatMagicDamageMod), source, enemy);
+                    return
+                        CalcMagicDmg(
+                            (75 + (source.Spellbook.GetSpell(SpellSlot.R).Level*175)) + (1.0*source.FlatMagicDamageMod),
+                            source, enemy);
                 case "Draven":
-                    return CalcPhysicalDmg((75 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 100)) + (1.1 * source.FlatPhysicalDamageMod), source, enemy); // way to enemy
+                    return
+                        CalcPhysicalDmg(
+                            (75 + (source.Spellbook.GetSpell(SpellSlot.R).Level*100)) +
+                            (1.1*source.FlatPhysicalDamageMod), source, enemy); // way to enemy
                 case "Jinx":
-                    var percentage = CalcPhysicalDmg(((enemy.MaxHealth - enemy.Health) / 100) * (20 + (5 * source.Spellbook.GetSpell(SpellSlot.R).Level)), source, enemy);
-                    return percentage + CalcPhysicalDmg((150 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 100)) + (1.0 * source.FlatPhysicalDamageMod), source, enemy);
+                    double percentage =
+                        CalcPhysicalDmg(
+                            ((enemy.MaxHealth - enemy.Health)/100)*
+                            (20 + (5*source.Spellbook.GetSpell(SpellSlot.R).Level)), source, enemy);
+                    return percentage +
+                           CalcPhysicalDmg(
+                               (150 + (source.Spellbook.GetSpell(SpellSlot.R).Level*100)) +
+                               (1.0*source.FlatPhysicalDamageMod), source, enemy);
                 case "Ezreal":
-                    return CalcMagicDmg((200 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 150)) +
-                        (1.0 * (source.FlatPhysicalDamageMod + source.BaseAttackDamage)) +
-                        (0.9 * source.FlatMagicDamageMod), source, enemy);
+                    return CalcMagicDmg((200 + (source.Spellbook.GetSpell(SpellSlot.R).Level*150)) +
+                                        (1.0*(source.FlatPhysicalDamageMod + source.BaseAttackDamage)) +
+                                        (0.9*source.FlatMagicDamageMod), source, enemy);
                 default:
                     return 0;
             }
@@ -169,7 +181,7 @@ namespace BaseUlt2
             bool doubleedgedsword = false, havoc = false, arcaneblade = false, butcher = false;
             int executioner = 0;
 
-            foreach (var mastery in source.Masteries)
+            foreach (Mastery mastery in source.Masteries)
             {
                 if (mastery.Page == MasteryPage.Offense)
                 {
@@ -199,47 +211,47 @@ namespace BaseUlt2
             {
                 if (source.CombatType == GameObjectCombatType.Melee)
                 {
-                    additionaldmg += dmg * 0.02;
+                    additionaldmg += dmg*0.02;
                 }
                 else
                 {
-                    additionaldmg += dmg * 0.015;
+                    additionaldmg += dmg*0.015;
                 }
             }
 
             if (havoc)
             {
-                additionaldmg += dmg * 0.03;
+                additionaldmg += dmg*0.03;
             }
 
             if (executioner > 0)
             {
                 if (executioner == 1)
                 {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 20)
+                    if ((enemy.Health/enemy.MaxHealth)*100 < 20)
                     {
-                        additionaldmg += dmg * 0.05;
+                        additionaldmg += dmg*0.05;
                     }
                 }
                 else if (executioner == 2)
                 {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 35)
+                    if ((enemy.Health/enemy.MaxHealth)*100 < 35)
                     {
-                        additionaldmg += dmg * 0.05;
+                        additionaldmg += dmg*0.05;
                     }
                 }
                 else if (executioner == 3)
                 {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 50)
+                    if ((enemy.Health/enemy.MaxHealth)*100 < 50)
                     {
-                        additionaldmg += dmg * 0.05;
+                        additionaldmg += dmg*0.05;
                     }
                 }
             }
 
-            double newarmor = enemy.Armor * source.PercentArmorPenetrationMod;
-            var dmgreduction = 100 / (100 + newarmor - source.FlatArmorPenetrationMod);
-            return (((dmg + additionaldmg) * dmgreduction));
+            double newarmor = enemy.Armor*source.PercentArmorPenetrationMod;
+            double dmgreduction = 100/(100 + newarmor - source.FlatArmorPenetrationMod);
+            return (((dmg + additionaldmg)*dmgreduction));
         }
 
         public static double CalcMagicDmg(double dmg, Obj_AI_Hero source, Obj_AI_Base enemy)
@@ -247,7 +259,7 @@ namespace BaseUlt2
             bool doubleedgedsword = false, havoc = false, arcaneblade = false, butcher = false;
             int executioner = 0;
 
-            foreach (var mastery in source.Masteries)
+            foreach (Mastery mastery in source.Masteries)
             {
                 if (mastery.Page == MasteryPage.Offense)
                 {
@@ -277,45 +289,45 @@ namespace BaseUlt2
             {
                 if (source.CombatType == GameObjectCombatType.Melee)
                 {
-                    additionaldmg = dmg * 0.02;
+                    additionaldmg = dmg*0.02;
                 }
                 else
                 {
-                    additionaldmg = dmg * 0.015;
+                    additionaldmg = dmg*0.015;
                 }
             }
             if (havoc)
             {
-                additionaldmg += dmg * 0.03;
+                additionaldmg += dmg*0.03;
             }
             if (executioner > 0)
             {
                 if (executioner == 1)
                 {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 20)
+                    if ((enemy.Health/enemy.MaxHealth)*100 < 20)
                     {
-                        additionaldmg += dmg * 0.05;
+                        additionaldmg += dmg*0.05;
                     }
                 }
                 else if (executioner == 2)
                 {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 35)
+                    if ((enemy.Health/enemy.MaxHealth)*100 < 35)
                     {
-                        additionaldmg += dmg * 0.05;
+                        additionaldmg += dmg*0.05;
                     }
                 }
                 else if (executioner == 3)
                 {
-                    if ((enemy.Health / enemy.MaxHealth) * 100 < 50)
+                    if ((enemy.Health/enemy.MaxHealth)*100 < 50)
                     {
-                        additionaldmg += dmg * 0.05;
+                        additionaldmg += dmg*0.05;
                     }
                 }
             }
 
-            double newspellblock = enemy.SpellBlock * source.PercentMagicPenetrationMod;
-            var dmgreduction = 100 / (100 + newspellblock - source.FlatMagicPenetrationMod);
-            return (((dmg + additionaldmg) * dmgreduction));
+            double newspellblock = enemy.SpellBlock*source.PercentMagicPenetrationMod;
+            double dmgreduction = 100/(100 + newspellblock - source.FlatMagicPenetrationMod);
+            return (((dmg + additionaldmg)*dmgreduction));
         }
     }
 }

@@ -115,6 +115,8 @@ namespace BaseUlt2
                 if (champ.ChampionName != "Ezreal" && Helper.IsCollidingWithChamps(champ, _enemySpawnPos, UltInfo[champ.ChampionName].Width))
                     continue;
 
+                //test
+
                 //increase timeneeded if it should arrive earlier, decrease if later
                 float timeneeded = Helper.GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, _enemySpawnPos) - (_menu.Item("extraDelay").GetValue<Slider>().Value + 65);
                 

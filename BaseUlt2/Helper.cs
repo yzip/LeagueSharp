@@ -32,7 +32,7 @@ namespace BaseUlt2
         public static float GetSpellTravelTime(Obj_AI_Hero source, float speed, float delay, Vector3 targetpos)
         {
             if (source.ChampionName == "Karthus")
-                return delay;
+                return delay*1000;
 
             float distance = Vector3.Distance(source.ServerPosition, targetpos);
 

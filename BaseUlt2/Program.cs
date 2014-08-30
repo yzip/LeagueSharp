@@ -30,7 +30,7 @@ namespace BaseUlt2
             {"Ashe", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 100f, DamageMultiplicator = 1f, Width = 130f, Delay = 250f/1000f, Speed = 1600f, Range = 20000f}},
             {"Draven", new UltData {StageType = DamageLib.StageType.FirstDamage, ManaCost = 120f, DamageMultiplicator = 0.7f, Width = 160f, Delay = 400f/1000f, Speed = 2000f, Range = 20000f}},
             {"Ezreal", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 100f, DamageMultiplicator = 0.7f, Width = 160f, Delay = 1000f/1000f, Speed = 2000f, Range = 20000f}},
-            {"Karthus", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 150f, DamageMultiplicator = 1f, Width = 0f, Delay = 3000f/1000f, Speed = 0f, Range = 20000f}}
+            {"Karthus", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 150f, DamageMultiplicator = 1f, Width = 0f, Delay = 3120f/1000f, Speed = 0f, Range = 20000f}}
         };
 
         private static void Main(string[] args)
@@ -55,16 +55,16 @@ namespace BaseUlt2
             var teamUlt = new Menu("Team Baseult Friends", "TeamUlt");
             _menu.AddSubMenu(teamUlt);
 
+            List<Obj_AI_Hero> champions = ObjectManager.Get<Obj_AI_Hero>().ToList();
+
+            _ownTeam = champions.Where(x => x.IsAlly);
+            _enemyTeam = champions.Where(x => x.IsEnemy);
+
             _compatibleChamp = Helper.IsCompatibleChamp(ObjectManager.Player.ChampionName);
 
             if(_compatibleChamp)
                 foreach (Obj_AI_Hero champ in _ownTeam.Where(x => !x.IsMe && Helper.IsCompatibleChamp(x.ChampionName)))
                     teamUlt.AddItem(new MenuItem(champ.ChampionName, champ.ChampionName + " friend with Baseult?").SetValue(false).DontSave());
-
-            List<Obj_AI_Hero> champions = ObjectManager.Get<Obj_AI_Hero>().ToList();
-
-            _ownTeam = champions.Where(x => x.IsAlly);
-            _enemyTeam = champions.Where(x => x.IsEnemy);
 
             _enemySpawnPos = ObjectManager.Get<GameObject>().First(x => x.Type == GameObjectType.obj_SpawnPoint && x.Team != ObjectManager.Player.Team).Position;
 
@@ -137,7 +137,7 @@ namespace BaseUlt2
 
                 //increase timeneeded if it should arrive earlier, decrease if later
                 float timeneeded = Helper.GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, _enemySpawnPos) - (_menu.Item("extraDelay").GetValue<Slider>().Value + 65);
-                
+
                 if (timeneeded - playerInfo.GetRecallCountdown() > 60)
                     continue;
 

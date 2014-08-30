@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+
 using Color = System.Drawing.Color;
 
 namespace BaseUlt2
@@ -52,15 +54,16 @@ namespace BaseUlt2
             var teamUlt = new Menu("Team Baseult Friends", "TeamUlt");
             _menu.AddSubMenu(teamUlt);
 
+            _compatibleChamp = Helper.IsCompatibleChamp(ObjectManager.Player.ChampionName);
+
+            if(_compatibleChamp)
+                foreach (Obj_AI_Hero champ in _ownTeam.Where(x => !x.IsMe && Helper.IsCompatibleChamp(x.ChampionName)))
+                    teamUlt.AddItem(new MenuItem(champ.ChampionName, champ.ChampionName + " friend with Baseult?").SetValue(false).DontSave());
+
             List<Obj_AI_Hero> champions = ObjectManager.Get<Obj_AI_Hero>().ToList();
 
             _ownTeam = champions.Where(x => x.IsAlly);
             _enemyTeam = champions.Where(x => x.IsEnemy);
-
-            _compatibleChamp = Helper.IsCompatibleChamp(ObjectManager.Player.ChampionName);
-
-            foreach (Obj_AI_Hero champ in _ownTeam.Where(x => !x.IsMe && Helper.IsCompatibleChamp(x.ChampionName)))
-                teamUlt.AddItem(new MenuItem(champ.ChampionName, champ.ChampionName + " friend with Baseult?").SetValue(false).DontSave());
 
             _enemySpawnPos = ObjectManager.Get<GameObject>().First(x => x.Type == GameObjectType.obj_SpawnPoint && x.Team != ObjectManager.Player.Team).Position;
 
@@ -114,8 +117,6 @@ namespace BaseUlt2
             {
                 if (champ.ChampionName != "Ezreal" && Helper.IsCollidingWithChamps(champ, _enemySpawnPos, UltInfo[champ.ChampionName].Width))
                     continue;
-
-                //test
 
                 //increase timeneeded if it should arrive earlier, decrease if later
                 float timeneeded = Helper.GetSpellTravelTime(champ, UltInfo[champ.ChampionName].Speed, UltInfo[champ.ChampionName].Delay, _enemySpawnPos) - (_menu.Item("extraDelay").GetValue<Slider>().Value + 65);

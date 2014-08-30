@@ -29,7 +29,8 @@ namespace BaseUlt2
             {"Jinx", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 100f, DamageMultiplicator = 1f, Width = 140f, Delay = 600f/1000f, Speed = 1700f, Range = 20000f}},
             {"Ashe", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 100f, DamageMultiplicator = 1f, Width = 130f, Delay = 250f/1000f, Speed = 1600f, Range = 20000f}},
             {"Draven", new UltData {StageType = DamageLib.StageType.FirstDamage, ManaCost = 120f, DamageMultiplicator = 0.7f, Width = 160f, Delay = 400f/1000f, Speed = 2000f, Range = 20000f}},
-            {"Ezreal", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 100f, DamageMultiplicator = 0.7f, Width = 160f, Delay = 1000f/1000f, Speed = 2000f, Range = 20000f}}
+            {"Ezreal", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 100f, DamageMultiplicator = 0.7f, Width = 160f, Delay = 1000f/1000f, Speed = 2000f, Range = 20000f}},
+            {"Karthus", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 150f, DamageMultiplicator = 1f, Width = 0f, Delay = 3000f/1000f, Speed = 0f, Range = 20000f}}
         };
 
         private static void Main(string[] args)
@@ -103,6 +104,22 @@ namespace BaseUlt2
             }
         }
 
+        private static float GetUltManaCost(Obj_AI_Hero source) //remove later when fixed
+        {
+            float manaCost = UltInfo[source.ChampionName].ManaCost;
+
+            if(source.ChampionName == "Karthus")
+            {
+                if (source.Level >= 11)
+                    manaCost += 25;
+
+                if (source.Level >= 16)
+                    manaCost += 25;
+            }
+
+            return manaCost;
+        }
+
         private static void HandleRecallShot(PlayerInfo playerInfo)
         {
             bool shoot = false;
@@ -113,9 +130,9 @@ namespace BaseUlt2
                             (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready ||
                             (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 &&
                             x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed &&
-                            x.Mana >= UltInfo[x.ChampionName].ManaCost)))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
+                            x.Mana >= GetUltManaCost(x))))) //use when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready or champ.Spellbook.GetSpell(SpellSlot.R).ManaCost)
             {
-                if (champ.ChampionName != "Ezreal" && Helper.IsCollidingWithChamps(champ, _enemySpawnPos, UltInfo[champ.ChampionName].Width))
+                if (champ.ChampionName != "Ezreal" && champ.ChampionName != "Karthus" && Helper.IsCollidingWithChamps(champ, _enemySpawnPos, UltInfo[champ.ChampionName].Width))
                     continue;
 
                 //increase timeneeded if it should arrive earlier, decrease if later

@@ -31,6 +31,9 @@ namespace BaseUlt2
 
         public static float GetSpellTravelTime(Obj_AI_Hero source, float speed, float delay, Vector3 targetpos)
         {
+            if (source.ChampionName == "Karthus")
+                return delay;
+
             float distance = Vector3.Distance(source.ServerPosition, targetpos);
 
             float missilespeed = speed;
@@ -137,6 +140,7 @@ namespace BaseUlt2
                 case "Ezreal":
                 case "Draven":
                 case "Jinx":
+                case "Karthus":
                     return true;
 
                 default:
@@ -171,6 +175,10 @@ namespace BaseUlt2
                     return CalcMagicDmg((200 + (source.Spellbook.GetSpell(SpellSlot.R).Level*150)) +
                                         (1.0*(source.FlatPhysicalDamageMod + source.BaseAttackDamage)) +
                                         (0.9*source.FlatMagicDamageMod), source, enemy);
+                case "Karthus":
+                    return CalcMagicDmg(
+                            (100 + (source.Spellbook.GetSpell(SpellSlot.R).Level * 150)) +
+                            (0.6 * source.FlatMagicDamageMod), source, enemy);
                 default:
                     return 0;
             }

@@ -30,7 +30,7 @@ namespace BaseUlt2
             {"Ashe", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 100f, DamageMultiplicator = 1f, Width = 130f, Delay = 250f/1000f, Speed = 1600f, Range = 20000f}},
             {"Draven", new UltData {StageType = DamageLib.StageType.FirstDamage, ManaCost = 120f, DamageMultiplicator = 0.7f, Width = 160f, Delay = 400f/1000f, Speed = 2000f, Range = 20000f}},
             {"Ezreal", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 100f, DamageMultiplicator = 0.7f, Width = 160f, Delay = 1000f/1000f, Speed = 2000f, Range = 20000f}},
-            {"Karthus", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 150f, DamageMultiplicator = 1f, Width = 0f, Delay = 3120f/1000f, Speed = 0f, Range = 20000f}}
+            {"Karthus", new UltData {StageType = DamageLib.StageType.Default, ManaCost = 150f, DamageMultiplicator = 1f, Width = 0f, Delay = 3125f/1000f, Speed = 0f, Range = 20000f}}
         };
 
         private static void Main(string[] args)

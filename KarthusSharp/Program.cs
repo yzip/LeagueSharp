@@ -11,16 +11,29 @@ using SharpDX;
 
 namespace KarthusSharp
 {
+    class PlayerInfo
+    {
+        public Obj_AI_Hero Player;
+        public int LastSeen;
+
+        public PlayerInfo(Obj_AI_Hero player)
+        {
+            Player = player;
+        }
+    }
+
     class Program
     {
         private static Menu _menu;
         private static IEnumerable<Obj_AI_Hero> _enemyTeam;
         private static Orbwalking.Orbwalker _orbwalker;
 
-        private static bool _checkEState;
+        private static int _checkEState;
 
         private static Spell _spellQ, _spellW, _spellE, _spellR;
         private static SpellSlot _igniteSlot;
+
+        private static List<PlayerInfo> _playerInfo = new List<PlayerInfo>();
 
         static void Main(string[] args)
         {
@@ -60,26 +73,30 @@ namespace KarthusSharp
             farmMenu.AddItem(new MenuItem("farmE", "Use E in Lane Clear").SetValue(false));
 
             var drawMenu = _menu.AddSubMenu(new Menu("Drawing", "Drawing"));
-            drawMenu.AddItem(new MenuItem("notifyR", "NYI : Alert on R killable enemies").SetValue(true));
+            drawMenu.AddItem(new MenuItem("notifyR", "Alert on R killable enemies").SetValue(true));
             drawMenu.AddItem(new MenuItem("drawQ", "Draw Q range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(125, 0, 255, 0))));
 
             var miscMenu = _menu.AddSubMenu(new Menu("Misc", "Misc"));
             miscMenu.AddItem(new MenuItem("igniteKS", "Ignite KS").SetValue(true));
+            miscMenu.AddItem(new MenuItem("ultKS", "Ultimate KS").SetValue(false));
             miscMenu.AddItem(new MenuItem("packetCast", "Packet Cast").SetValue(true));
             miscMenu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false).DontSave());
 
             _spellQ = new Spell(SpellSlot.Q, 875);
             _spellW = new Spell(SpellSlot.W, 1000);
-            _spellE = new Spell(SpellSlot.E, 500);
+            _spellE = new Spell(SpellSlot.E, 505);
             _spellR = new Spell(SpellSlot.R, 20000f);
 
             _igniteSlot = ObjectManager.Player.GetSpellSlot("SummonerDot");
 
-            _spellQ.SetSkillshot(1f, 160, float.MaxValue, false, SkillshotType.SkillshotCircle);
-            _spellW.SetSkillshot(.5f, 80, float.MaxValue, false, SkillshotType.SkillshotCircle);
-            _spellE.SetSkillshot(1f, 550, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            _spellQ.SetSkillshot(1f, 160, 1700, false, SkillshotType.SkillshotCircle);
+            _spellW.SetSkillshot(.5f, 80, 1600, false, SkillshotType.SkillshotCircle);
+            _spellE.SetSkillshot(1f, 550, 1000, false, SkillshotType.SkillshotCircle);
+            _spellR.SetSkillshot(3f, float.MaxValue, float.MaxValue, false, SkillshotType.SkillshotCircle);
 
             _enemyTeam = ObjectManager.Get<Obj_AI_Hero>().Where(x => x.IsEnemy);
+
+            _playerInfo = _enemyTeam.Select(x => new PlayerInfo(x)).ToList();
 
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnGameUpdate += Game_OnGameUpdate;
@@ -89,6 +106,8 @@ namespace KarthusSharp
 
         static void Game_OnGameUpdate(EventArgs args)
         {
+            UpdateLastSeen();
+
             if (_menu.Item("comboKey").GetValue<KeyBind>().Active)
             {
                 bool attack = _menu.Item("comboAA").GetValue<bool>();
@@ -116,13 +135,41 @@ namespace KarthusSharp
 
             if (_menu.Item("igniteKS").GetValue<bool>())
                 IgniteKS();
+
+            if (_menu.Item("ultKS").GetValue<bool>())
+                UltKS();
+        }
+
+        static void UltKS()
+        {
+            if (_spellR.IsReady())
+            {
+                foreach (Obj_AI_Hero target in _playerInfo.Where(x =>
+                    x.Player.IsValid &&
+                    !x.Player.IsDead &&
+                    x.Player.IsEnemy &&
+                    (!x.Player.IsVisible || (x.Player.IsVisible && Utility.IsValidTarget(x.Player))) &&
+                    DamageLib.getDmg(x.Player, DamageLib.SpellType.R) >= GetTargetHealth(x, (int)(_spellR.Delay * 1000f))).Select(x => x.Player))
+                {
+                    if(!_enemyTeam.Any(x => x.IsValid && !x.IsDead && x.IsVisible && ObjectManager.Player.Distance(x) < 1500))
+                        _spellR.Cast(ObjectManager.Player.ServerPosition, true);
+                }
+            }
+        }
+
+        static void UpdateLastSeen()
+        {
+            int time = Environment.TickCount;
+
+            foreach (PlayerInfo playerInfo in _playerInfo.Where(x => x.Player.IsVisible))
+                playerInfo.LastSeen = time;
         }
 
         static void IgniteKS()
         {
             if (_igniteSlot != SpellSlot.Unknown && ObjectManager.Player.SummonerSpellbook.CanUseSpell(_igniteSlot) == SpellState.Ready)
             {
-                Obj_AI_Hero target = _enemyTeam.First(x => Utility.IsValidTarget(x, 600) && DamageLib.getDmg(x, DamageLib.SpellType.IGNITE) >= x.Health);//null;
+                Obj_AI_Hero target = _enemyTeam.FirstOrDefault(x => Utility.IsValidTarget(x, 600) && DamageLib.getDmg(x, DamageLib.SpellType.IGNITE) >= x.Health);
 
                 if (target != null)
                     ObjectManager.Player.SummonerSpellbook.CastSpell(_igniteSlot, target);
@@ -131,14 +178,15 @@ namespace KarthusSharp
 
         static void RegulateEState()
         {
-            if (_checkEState && _spellE.IsReady()) //otherwise user has manually enabled E
+            if (_checkEState > 0 && _spellE.IsReady()) //otherwise user has manually enabled E
             {
                 Obj_AI_Hero target = SimpleTs.GetTarget(_spellE.Range, SimpleTs.DamageType.Magical);
 
                 if (target == null && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2)
+                {
                     _spellE.Cast(ObjectManager.Player.Position, _menu.Item("packetCast").GetValue<bool>());
-
-                _checkEState = false;
+                    _checkEState--;
+                }
             }
         }
 
@@ -162,17 +210,17 @@ namespace KarthusSharp
                 {
                     if (ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1)
                     {
-                        if (ObjectManager.Player.Distance(target.ServerPosition) <= _spellE.Range)
+                        if (ObjectManager.Player.Distance(target.ServerPosition) <= _spellE.Range && _checkEState == 0)
                         {
                             _spellE.Cast(ObjectManager.Player.Position, _menu.Item("packetCast").GetValue<bool>());
-                            _checkEState = true;
+                            _checkEState++;
                         }
                     }
                 }
-                else if (ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2)
+                else if (ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2 && _checkEState > 0)
                 {
                     _spellE.Cast(ObjectManager.Player.Position, _menu.Item("packetCast").GetValue<bool>());
-                    _checkEState = false;
+                    _checkEState--;
                 }
             }
 
@@ -216,17 +264,17 @@ namespace KarthusSharp
             {
                 minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellE.Range, MinionTypes.All, MinionTeam.NotAlly, MinionOrderTypes.Health);
 
-                bool jungleMobs = minions.Any(x => x.Team == GameObjectTeam.Neutral);
+                bool jungleMobs = minions.Any(x => x.Team == GameObjectTeam.Neutral && x.Health > DamageLib.getDmg(x, DamageLib.SpellType.Q, DamageLib.StageType.FirstDamage)); //FirstDamage = multitarget hit, differentiate! (check radius around mob pos)
 
-                if ((minions.Count >= 3 || jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1)
+                if ((minions.Count >= 3 || jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1 && _checkEState == 0)
                 {
                     _spellE.Cast(ObjectManager.Player.ServerPosition, _menu.Item("packetCast").GetValue<bool>());
-                    _checkEState = true;
+                    _checkEState++;
                 }
-                else if ((minions.Count <= 1 && !jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2)
+                else if ((minions.Count <= 1 && !jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2 && _checkEState > 0)
                 {
                     _spellE.Cast(ObjectManager.Player.ServerPosition, _menu.Item("packetCast").GetValue<bool>());
-                    _checkEState = false;
+                    _checkEState--;
                 }
             }
         }
@@ -237,7 +285,7 @@ namespace KarthusSharp
 
             var minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellQ.Range, MinionTypes.All, MinionTeam.NotAlly, MinionOrderTypes.Health);
 
-            foreach (var minion in minions.Where(x => DamageLib.getDmg(x, DamageLib.SpellType.Q, DamageLib.StageType.FirstDamage) >= //FirstDamage = multitarget hit, differentiate!
+            foreach (var minion in minions.Where(x => DamageLib.getDmg(x, DamageLib.SpellType.Q, DamageLib.StageType.FirstDamage) >= //FirstDamage = multitarget hit, differentiate! (check radius around mob predicted pos)
                 HealthPrediction.GetHealthPrediction(x, (int)(_spellQ.Delay * 1000))))
             {
                 if (farmQ && _spellQ.IsReady())
@@ -254,7 +302,37 @@ namespace KarthusSharp
             if (drawQ.Active)
                 Utility.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQ.Color);
 
-            //notify if somebody can be killed with ult
+            String victims = "";
+
+            int time = Environment.TickCount;
+
+            foreach(Obj_AI_Hero target in _playerInfo.Where(x => 
+                x.Player.IsValid && 
+                !x.Player.IsDead && 
+                x.Player.IsEnemy && 
+                ((!x.Player.IsVisible && time - x.LastSeen < 10000) || (x.Player.IsVisible && Utility.IsValidTarget(x.Player))) && 
+                DamageLib.getDmg(x.Player, DamageLib.SpellType.R) >= GetTargetHealth(x, (int)(_spellR.Delay * 1000f))).Select(x => x.Player))
+            {
+                victims += target.ChampionName + " ";
+            }
+
+            if (victims != "")
+            {
+                Drawing.DrawText(Drawing.Width * 0.44f, Drawing.Height * 0.7f, System.Drawing.Color.GreenYellow, "Ult can kill: " + victims);
+
+                //use when pos works
+                //new Render.Text((int)(Drawing.Width * 0.44f), (int)(Drawing.Height * 0.7f), "Ult can kill: " + victims, 30, SharpDX.Color.Red); //.Add()
+            } 
+        }
+
+        public static float GetTargetHealth(PlayerInfo playerInfo, int additionalTime)
+        {
+            if (playerInfo.Player.IsVisible)
+                return playerInfo.Player.Health;
+
+            float predictedhealth = playerInfo.Player.Health + playerInfo.Player.HPRegenRate * ((Environment.TickCount - playerInfo.LastSeen + additionalTime) / 1000f);
+
+            return predictedhealth > playerInfo.Player.MaxHealth ? playerInfo.Player.MaxHealth : predictedhealth;
         }
     }
 }

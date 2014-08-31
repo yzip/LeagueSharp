@@ -56,7 +56,7 @@ namespace BaseUlt2
             float countdown = GetRecallCountdown()/1000f;
 
             if (countdown > 0)
-                drawtext += " (" + countdown.ToString("0.00") + "s)";
+                drawtext += " (" + countdown.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "s)";
 
             return drawtext;
         }

@@ -266,11 +266,13 @@ namespace KarthusSharp
         {
             if (_spellR.IsReady())
             {
+                int time = Environment.TickCount;
+
                 foreach (Obj_AI_Hero target in _playerInfo.Where(x =>
                     x.Player.IsValid &&
                     !x.Player.IsDead &&
                     x.Player.IsEnemy &&
-                    (!x.Player.IsVisible || (x.Player.IsVisible && Utility.IsValidTarget(x.Player))) &&
+                    ((!x.Player.IsVisible && time - x.LastSeen < 10000) || (x.Player.IsVisible && Utility.IsValidTarget(x.Player))) &&
                     DamageLib.getDmg(x.Player, DamageLib.SpellType.R) >= GetTargetHealth(x, (int)(_spellR.Delay * 1000f))).Select(x => x.Player))
                 {
                     bool cast = true;

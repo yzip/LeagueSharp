@@ -43,17 +43,15 @@ namespace BaseUlt2
 
         private static void Game_OnGameStart(EventArgs args)
         {
-            _menu = new Menu("BaseUlt2", "BaseUlt", true);
-            _menu.AddToMainMenu();
+            (_menu = new Menu("BaseUlt2", "BaseUlt", true)).AddToMainMenu();
             _menu.AddItem(new MenuItem("showRecalls", "Show Recalls").SetValue(true));
             _menu.AddItem(new MenuItem("baseUlt", "Base Ult").SetValue(true));
             _menu.AddItem(new MenuItem("extraDelay", "Extra Delay").SetValue(new Slider(0, -2000, 2000)));
             _menu.AddItem(new MenuItem("panicKey", "Panic key (hold for disable)").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
             _menu.AddItem(new MenuItem("regardlessKey", "No timelimit (hold)").SetValue(new KeyBind(17, KeyBindType.Press))); //17 == ctrl
-            _menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false));
+            _menu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false).DontSave());
 
-            var teamUlt = new Menu("Team Baseult Friends", "TeamUlt");
-            _menu.AddSubMenu(teamUlt);
+            var teamUlt = _menu.AddSubMenu(new Menu("Team Baseult Friends", "TeamUlt"));
 
             List<Obj_AI_Hero> champions = ObjectManager.Get<Obj_AI_Hero>().ToList();
 

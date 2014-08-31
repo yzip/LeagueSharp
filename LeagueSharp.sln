@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaseUlt2", "BaseUlt2\BaseUlt2.csproj", "{C01B3833-4EB0-47E4-BB70-217F66AFD3A2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KarthusSharp", "KarthusSharp\KarthusSharp.csproj", "{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{C01B3833-4EB0-47E4-BB70-217F66AFD3A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C01B3833-4EB0-47E4-BB70-217F66AFD3A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C01B3833-4EB0-47E4-BB70-217F66AFD3A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -79,7 +79,7 @@ namespace KarthusSharp
             var miscMenu = _menu.AddSubMenu(new Menu("Misc", "Misc"));
             miscMenu.AddItem(new MenuItem("igniteKS", "Ignite KS").SetValue(true));
             miscMenu.AddItem(new MenuItem("ultKS", "Ultimate KS").SetValue(false));
-            miscMenu.AddItem(new MenuItem("packetCast", "Packet Cast").SetValue(true));
+            miscMenu.AddItem(new MenuItem("packetCast", "Packet Cast (Q,W,R)").SetValue(true));
             miscMenu.AddItem(new MenuItem("debugMode", "Debug (developer only)").SetValue(false).DontSave());
 
             _spellQ = new Spell(SpellSlot.Q, 875);
@@ -152,7 +152,7 @@ namespace KarthusSharp
                     DamageLib.getDmg(x.Player, DamageLib.SpellType.R) >= GetTargetHealth(x, (int)(_spellR.Delay * 1000f))).Select(x => x.Player))
                 {
                     if(!_enemyTeam.Any(x => x.IsValid && !x.IsDead && x.IsVisible && ObjectManager.Player.Distance(x) < 1500))
-                        _spellR.Cast(ObjectManager.Player.ServerPosition, true);
+                        _spellR.Cast(ObjectManager.Player.Position, _menu.Item("packetCast").GetValue<bool>());
                 }
             }
         }
@@ -178,13 +178,15 @@ namespace KarthusSharp
 
         static void RegulateEState()
         {
-            if (_checkEState > 0 && _spellE.IsReady()) //otherwise user has manually enabled E
+            if (ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1)
+                _checkEState = 0;
+            else if (_checkEState > 0 && _spellE.IsReady()) //otherwise user has manually enabled E
             {
                 Obj_AI_Hero target = SimpleTs.GetTarget(_spellE.Range, SimpleTs.DamageType.Magical);
 
-                if (target == null && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2)
+                if (target == null)
                 {
-                    _spellE.Cast(ObjectManager.Player.Position, _menu.Item("packetCast").GetValue<bool>());
+                    _spellE.Cast();
                     _checkEState--;
                 }
             }
@@ -212,14 +214,14 @@ namespace KarthusSharp
                     {
                         if (ObjectManager.Player.Distance(target.ServerPosition) <= _spellE.Range && _checkEState == 0)
                         {
-                            _spellE.Cast(ObjectManager.Player.Position, _menu.Item("packetCast").GetValue<bool>());
+                            _spellE.Cast();
                             _checkEState++;
                         }
                     }
                 }
                 else if (ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2 && _checkEState > 0)
                 {
-                    _spellE.Cast(ObjectManager.Player.Position, _menu.Item("packetCast").GetValue<bool>());
+                    _spellE.Cast();
                     _checkEState--;
                 }
             }
@@ -268,12 +270,12 @@ namespace KarthusSharp
 
                 if ((minions.Count >= 3 || jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1 && _checkEState == 0)
                 {
-                    _spellE.Cast(ObjectManager.Player.ServerPosition, _menu.Item("packetCast").GetValue<bool>());
+                    _spellE.Cast();
                     _checkEState++;
                 }
                 else if ((minions.Count <= 1 && !jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2 && _checkEState > 0)
                 {
-                    _spellE.Cast(ObjectManager.Player.ServerPosition, _menu.Item("packetCast").GetValue<bool>());
+                    _spellE.Cast();
                     _checkEState--;
                 }
             }

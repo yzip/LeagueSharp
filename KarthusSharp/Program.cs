@@ -288,23 +288,28 @@ namespace KarthusSharp
             {
                 int time = Environment.TickCount;
 
-                foreach (Obj_AI_Hero target in _playerInfo.Where(x =>
+                foreach (PlayerInfo target in _playerInfo.Where(x =>
                     x.Player.IsValid &&
                     !x.Player.IsDead &&
                     x.Player.IsEnemy &&
                     ((!x.Player.IsVisible && time - x.LastSeen < 10000) || (x.Player.IsVisible && Utility.IsValidTarget(x.Player))) &&
-                    DamageLib.getDmg(x.Player, DamageLib.SpellType.R) >= GetTargetHealth(x, (int)(_spellR.Delay * 1000f))).Select(x => x.Player))
+                    DamageLib.getDmg(x.Player, DamageLib.SpellType.R) >= GetTargetHealth(x, (int)(_spellR.Delay * 1000f))))
                 {
                     bool cast = true;
 
-                    if (target.IsVisible) //allies still attacking target? prevent overkill
-                        if (_ownTeam.Any(x => !x.IsMe && x.Distance(target) < 1800))
+                    if (target.Player.IsVisible || (!target.Player.IsVisible && time - target.LastSeen < 2750)) //allies still attacking target? prevent overkill
+                        if (_ownTeam.Any(x => !x.IsMe && x.Distance(target.Player) < 1800))
                             cast = false;
 
-                    if (cast && !_enemyTeam.Any(x => x.IsValid && !x.IsDead && x.IsVisible && ObjectManager.Player.Distance(x) < 1800)) //any other enemies around? dont ult
+                    if (cast && !_enemyTeam.Any(x => x.IsValid && !x.IsDead && (x.IsVisible || (!x.IsVisible && time - GetPlayerInfo(x).LastSeen < 2750)) && ObjectManager.Player.Distance(x) < 1800)) //any other enemies around? dont ult
                         _spellR.Cast(ObjectManager.Player.Position, _menu.Item("packetCast").GetValue<bool>());
                 }
             }
+        }
+
+        static PlayerInfo GetPlayerInfo(Obj_AI_Hero enemy)
+        {
+            return _playerInfo.Find(x => x.Player.NetworkId == enemy.NetworkId);
         }
 
         static bool IsInPassiveForm()

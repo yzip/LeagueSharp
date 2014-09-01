@@ -33,6 +33,7 @@ namespace KarthusSharp
         private static SpellSlot _igniteSlot;
 
         private const float _spellQWidth = 160f;
+        private const float _spellWWidth = 160f;
 
         private static List<PlayerInfo> _playerInfo = new List<PlayerInfo>();
 
@@ -161,7 +162,10 @@ namespace KarthusSharp
                 target = SimpleTs.GetTarget(_spellW.Range, SimpleTs.DamageType.Magical);
 
                 if (target != null)
+                {
+                    _spellW.Width = GetDynamicWWidth(target);
                     _spellW.Cast(target, _menu.Item("packetCast").GetValue<bool>());
+                }
             }
 
             if (_menu.Item("comboE").GetValue<bool>() && _spellE.IsReady() && !IsInPassiveForm())
@@ -188,6 +192,11 @@ namespace KarthusSharp
                     _spellQ.CastIfHitchanceEquals(target, HitChance.High, _menu.Item("packetCast").GetValue<bool>());
                 }
             }
+        }
+
+        static float GetDynamicWWidth(Obj_AI_Base target)
+        {
+            return Math.Max(70, (1f - (ObjectManager.Player.Distance(target) / _spellW.Range)) * _spellWWidth);
         }
 
         static float GetDynamicQWidth(Obj_AI_Base target)

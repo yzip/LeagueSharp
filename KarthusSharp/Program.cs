@@ -32,6 +32,8 @@ namespace KarthusSharp
         private static Spell _spellQ, _spellW, _spellE, _spellR;
         private static SpellSlot _igniteSlot;
 
+        private const float _spellQWidth = 160f;
+
         private static List<PlayerInfo> _playerInfo = new List<PlayerInfo>();
 
         static void Main(string[] args)
@@ -88,7 +90,7 @@ namespace KarthusSharp
 
             _igniteSlot = ObjectManager.Player.GetSpellSlot("SummonerDot");
 
-            _spellQ.SetSkillshot(1f, 20, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            _spellQ.SetSkillshot(1f, 160, float.MaxValue, false, SkillshotType.SkillshotCircle);
             _spellW.SetSkillshot(.5f, 80, float.MaxValue, false, SkillshotType.SkillshotCircle);
             _spellE.SetSkillshot(1f, 505, float.MaxValue, false, SkillshotType.SkillshotCircle);
             _spellR.SetSkillshot(3f, float.MaxValue, float.MaxValue, false, SkillshotType.SkillshotCircle);
@@ -178,20 +180,33 @@ namespace KarthusSharp
 
             if (_menu.Item("comboQ").GetValue<bool>() && _spellQ.IsReady())
             {
-                target = SimpleTs.GetTarget(_spellQ.Range + _spellQ.Width / 2, SimpleTs.DamageType.Magical);
+                target = SimpleTs.GetTarget(_spellQ.Range, SimpleTs.DamageType.Magical);
 
                 if (target != null)
+                {
+                    _spellQ.Width = GetDynamicQWidth(target);
                     _spellQ.CastIfHitchanceEquals(target, HitChance.High, _menu.Item("packetCast").GetValue<bool>());
+                }
             }
+        }
+
+        static float GetDynamicQWidth(Obj_AI_Base target)
+        {
+            return Math.Max(20, (1f - (ObjectManager.Player.Distance(target) / _spellQ.Range)) * _spellQWidth);
         }
 
         static void Harass()
         {
-            var target = SimpleTs.GetTarget(_spellQ.Range + _spellQ.Width / 3, SimpleTs.DamageType.Magical);
+            var target = SimpleTs.GetTarget(_spellQ.Range, SimpleTs.DamageType.Magical);
 
             if (target != null)
+            {
                 if (_menu.Item("harassQ").GetValue<bool>() && _spellQ.IsReady())
+                {
+                    _spellQ.Width = GetDynamicQWidth(target);
                     _spellQ.CastIfHitchanceEquals(target, HitChance.High, _menu.Item("packetCast").GetValue<bool>());
+                }
+            }
         }
 
         static void LaneClear()
@@ -206,6 +221,8 @@ namespace KarthusSharp
             if (farmQ && _spellQ.IsReady())
             {
                 minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellQ.Range, MinionTypes.All, MinionTeam.NotAlly, MinionOrderTypes.Health);
+
+                _spellQ.Width = _spellQWidth;
                 farmInfo = _spellQ.GetCircularFarmLocation(minions, _spellQ.Width);
 
                 if (farmInfo.MinionsHit >= 1)
@@ -235,7 +252,10 @@ namespace KarthusSharp
                 HealthPrediction.GetHealthPrediction(x, (int)(_spellQ.Delay * 1000))))
             {
                 if (farmQ && _spellQ.IsReady())
+                {
+                    _spellQ.Width = GetDynamicQWidth(minion);
                     _spellQ.Cast(minion, _menu.Item("packetCast").GetValue<bool>(), true);
+                }
             }
         }
 

@@ -32,7 +32,7 @@ namespace AmumuSharp
 
             _orbwalker = new Orbwalking.Orbwalker(_menu.AddSubMenu(new Menu("Orbwalking", "Orbwalking")));
 
-            var comboMenu = _menu.AddSubMenu(new Menu("TeamFight", "TeamFight"));
+            var comboMenu = _menu.AddSubMenu(new Menu("Combo", "Combo"));
             comboMenu.AddItem(new MenuItem("comboQ" + ObjectManager.Player.ChampionName, "Use Q").SetValue(new StringList(new[] { "No", "Always", "If out of range" }, 1)));
             comboMenu.AddItem(new MenuItem("comboW" + ObjectManager.Player.ChampionName, "Use W").SetValue(true));
             comboMenu.AddItem(new MenuItem("comboE" + ObjectManager.Player.ChampionName, "Use E").SetValue(true));

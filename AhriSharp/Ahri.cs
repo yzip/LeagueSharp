@@ -37,7 +37,7 @@ namespace AhriSharp
 
             _orbwalker = new Orbwalking.Orbwalker(_menu.AddSubMenu(new Menu("Orbwalking", "Orbwalking")));
 
-            var comboMenu = _menu.AddSubMenu(new Menu("TeamFight", "TeamFight"));
+            var comboMenu = _menu.AddSubMenu(new Menu("Combo", "Combo"));
             comboMenu.AddItem(new MenuItem("comboQ", "Use Q").SetValue(true));
             comboMenu.AddItem(new MenuItem("comboW", "Use W").SetValue(true));
             comboMenu.AddItem(new MenuItem("comboE", "Use E").SetValue(true));

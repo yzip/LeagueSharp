@@ -12,9 +12,6 @@ namespace KarthusSharp
      * - allow AA on Tower, Ward (don't Q wards)
      * - improve in early game (possible?)
      * 
-     * AutoIgnite:
-     * - add GetComboDamage and ignite earlier if combodamage would suffice
-     * 
      * Ult KS:
      * - don't KS anymore if enemy is recalling and would arrive base before ult went through (have to include BaseUlt functionality)
     * */
@@ -233,7 +230,7 @@ namespace KarthusSharp
             var minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellQ.Range, MinionTypes.All, MinionTeam.NotAlly);
 
             foreach (var minion in minions.Where(x => ObjectManager.Player.GetSpellDamage(x, SpellSlot.Q, 1) >= //FirstDamage = multitarget hit, differentiate! (check radius around mob predicted pos)
-                                                      HealthPrediction.GetHealthPrediction(x, (int)(_spellQ.Delay * 1000))))
+                                                      HealthPrediction.GetHealthPrediction(x, (int)(_spellQ.Delay * 1000), 90)))
             {
                 CastQ(minion, _menu.Item("farmQPercent").GetValue<Slider>().Value);
             }
@@ -329,7 +326,7 @@ namespace KarthusSharp
                     Utility.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQ.Color);
             }
 
-            if(ObjectManager.Player.Spellbook.CanUseSpell(SpellSlot.R) != SpellState.NotLearned)
+            if(ObjectManager.Player.Spellbook.GetSpell(SpellSlot.R).Level > 0)
             {
                 var victims = "";
 

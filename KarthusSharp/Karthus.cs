@@ -49,10 +49,13 @@ namespace KarthusSharp
             comboMenu.AddItem(new MenuItem("comboAA", "Use AA").SetValue(false));
             comboMenu.AddItem(new MenuItem("comboWPercent", "Use W until Mana %").SetValue(new Slider(10)));
             comboMenu.AddItem(new MenuItem("comboEPercent", "Use E until Mana %").SetValue(new Slider(15)));
+            comboMenu.AddItem(new MenuItem("comboMove", "Orbwalk/Move").SetValue(true));
 
             var harassMenu = _menu.AddSubMenu(new Menu("Harass", "Harass"));
             harassMenu.AddItem(new MenuItem("harassQ", "Use Q").SetValue(true));
             harassMenu.AddItem(new MenuItem("harassQPercent", "Use Q until Mana %").SetValue(new Slider(15)));
+            harassMenu.AddItem(new MenuItem("harassQLasthit", "Prioritize Last Hit").SetValue(true));
+            harassMenu.AddItem(new MenuItem("harassMove", "Orbwalk/Move").SetValue(true));
 
             var farmMenu = _menu.AddSubMenu(new Menu("Farming", "Farming"));
             farmMenu.AddItem(new MenuItem("farmQ", "Use Q").SetValue(new StringList(new[] { "Last Hit", "Lane Clear", "Both", "No" }, 1)));
@@ -60,6 +63,7 @@ namespace KarthusSharp
             farmMenu.AddItem(new MenuItem("farmAA", "Use AA in Lane Clear").SetValue(false));
             farmMenu.AddItem(new MenuItem("farmQPercent", "Use Q until Mana %").SetValue(new Slider(10)));
             farmMenu.AddItem(new MenuItem("farmEPercent", "Use E until Mana %").SetValue(new Slider(20)));
+            farmMenu.AddItem(new MenuItem("farmMove", "Orbwalk/Move").SetValue(true));
 
             var notifyMenu = _menu.AddSubMenu(new Menu("Notify on R killable enemies", "Notify"));
             notifyMenu.AddItem(new MenuItem("notifyR", "Text Notify").SetValue(true));
@@ -97,22 +101,27 @@ namespace KarthusSharp
             {
                 case Orbwalking.OrbwalkingMode.Combo:
                     _orbwalker.SetAttacks(_menu.Item("comboAA").GetValue<bool>() || ObjectManager.Player.Mana < 100); //if no mana, allow auto attacks!
+                    _orbwalker.SetMovement(_menu.Item("comboMove").GetValue<bool>());
                     Combo();
                     break;
                 case Orbwalking.OrbwalkingMode.Mixed:
                     _orbwalker.SetAttacks(true);
+                    _orbwalker.SetMovement(_menu.Item("harassMove").GetValue<bool>());
                     Harass();
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
                     _orbwalker.SetAttacks(_menu.Item("farmAA").GetValue<bool>() || ObjectManager.Player.Mana < 100);
+                    _orbwalker.SetMovement(_menu.Item("farmMove").GetValue<bool>());
                     LaneClear();
                     break;
                 case Orbwalking.OrbwalkingMode.LastHit:
                     _orbwalker.SetAttacks(true);
+                    _orbwalker.SetMovement(_menu.Item("farmMove").GetValue<bool>());
                     LastHit();
                     break;
                 default:
                     _orbwalker.SetAttacks(true);
+                    _orbwalker.SetMovement(true);
                     RegulateEState();
 
                     if (_menu.Item("autoCast").GetValue<bool>())
@@ -181,6 +190,9 @@ namespace KarthusSharp
 
         void Harass()
         {
+            if (_menu.Item("harassQLasthit").GetValue<bool>())
+                LastHit();
+
             if (_menu.Item("harassQ").GetValue<bool>())
                 CastQ(SimpleTs.GetTarget(_spellQ.Range, SimpleTs.DamageType.Magical), _menu.Item("harassQPercent").GetValue<Slider>().Value);
         }

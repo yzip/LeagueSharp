@@ -283,7 +283,7 @@ namespace KarthusSharp
             if (target == null)
                 return;
             _spellQ.Width = GetDynamicQWidth(target);
-            _spellQ.CastIfHitchanceEquals(target, HitChance.High, Packets());
+            _spellQ.Cast(target, Packets());
         }
 
         void CastQ(Vector2 pos, int minManaPercent = 0)
@@ -329,35 +329,38 @@ namespace KarthusSharp
                     Utility.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQ.Color);
             }
 
-            var victims = "";
-
-            var time = Environment.TickCount;
-
-            foreach (EnemyInfo target in Program.Helper.EnemyInfo.Where(x =>
-                x.Player.IsValid &&
-                !x.Player.IsDead &&
-                x.Player.IsEnemy &&
-                ((!x.Player.IsVisible && time - x.LastSeen < 10000) || (x.Player.IsVisible && Utility.IsValidTarget(x.Player))) &&
-                ObjectManager.Player.GetSpellDamage(x.Player, SpellSlot.R) >= Program.Helper.GetTargetHealth(x, (int)(_spellR.Delay * 1000f))))
+            if(ObjectManager.Player.Spellbook.CanUseSpell(SpellSlot.R) != SpellState.NotLearned)
             {
-                victims += target.Player.ChampionName + " ";
+                var victims = "";
 
-                if (!_menu.Item("notifyPing").GetValue<bool>() ||
-                    (target.LastPinged != 0 && Environment.TickCount - target.LastPinged <= 11000))
-                    continue;
-                if (!(ObjectManager.Player.Distance(target.Player) > 1800) ||
-                    (!target.Player.IsVisible && time - target.LastSeen <= 2750))
-                    continue;
-                Program.Helper.Ping(target.Player.Position);
-                target.LastPinged = Environment.TickCount;
-            }
+                var time = Environment.TickCount;
 
-            if (victims != "" && _menu.Item("notifyR").GetValue<bool>())
-            {
-                Drawing.DrawText(Drawing.Width * 0.44f, Drawing.Height * 0.7f, System.Drawing.Color.GreenYellow, "Ult can kill: " + victims);
+                foreach (EnemyInfo target in Program.Helper.EnemyInfo.Where(x =>
+                    x.Player.IsValid &&
+                    !x.Player.IsDead &&
+                    x.Player.IsEnemy &&
+                    ((!x.Player.IsVisible && time - x.LastSeen < 10000) || (x.Player.IsVisible && Utility.IsValidTarget(x.Player))) &&
+                    ObjectManager.Player.GetSpellDamage(x.Player, SpellSlot.R) >= Program.Helper.GetTargetHealth(x, (int)(_spellR.Delay * 1000f))))
+                {
+                    victims += target.Player.ChampionName + " ";
 
-                //use when pos works
-                //new Render.Text((int)(Drawing.Width * 0.44f), (int)(Drawing.Height * 0.7f), "Ult can kill: " + victims, 30, SharpDX.Color.Red); //.Add()
+                    if (!_menu.Item("notifyPing").GetValue<bool>() ||
+                        (target.LastPinged != 0 && Environment.TickCount - target.LastPinged <= 11000))
+                        continue;
+                    if (!(ObjectManager.Player.Distance(target.Player) > 1800) ||
+                        (!target.Player.IsVisible && time - target.LastSeen <= 2750))
+                        continue;
+                    Program.Helper.Ping(target.Player.Position);
+                    target.LastPinged = Environment.TickCount;
+                }
+
+                if (victims != "" && _menu.Item("notifyR").GetValue<bool>())
+                {
+                    Drawing.DrawText(Drawing.Width * 0.44f, Drawing.Height * 0.7f, System.Drawing.Color.GreenYellow, "Ult can kill: " + victims);
+
+                    //use when pos works
+                    //new Render.Text((int)(Drawing.Width * 0.44f), (int)(Drawing.Height * 0.7f), "Ult can kill: " + victims, 30, SharpDX.Color.Red); //.Add()
+                }
             }
         }
     }

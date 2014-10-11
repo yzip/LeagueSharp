@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaseUlt2", "BaseUlt2\BaseUl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KarthusSharp", "KarthusSharp\KarthusSharp.csproj", "{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AhriSharp", "AhriSharp\AhriSharp.csproj", "{99E6A469-CF6C-42A7-AACC-BF15F45AC0AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AmumuSharp", "AmumuSharp\AmumuSharp.csproj", "{23C72504-F836-4A88-924B-6CB84974EFAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CE8E1F5-F8B6-4AED-9831-BA7452BBD28E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99E6A469-CF6C-42A7-AACC-BF15F45AC0AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99E6A469-CF6C-42A7-AACC-BF15F45AC0AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99E6A469-CF6C-42A7-AACC-BF15F45AC0AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99E6A469-CF6C-42A7-AACC-BF15F45AC0AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23C72504-F836-4A88-924B-6CB84974EFAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23C72504-F836-4A88-924B-6CB84974EFAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23C72504-F836-4A88-924B-6CB84974EFAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23C72504-F836-4A88-924B-6CB84974EFAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

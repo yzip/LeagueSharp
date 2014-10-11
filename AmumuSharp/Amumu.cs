@@ -21,6 +21,9 @@ namespace AmumuSharp
 
         public Amumu() //add Q near mouse (range), 
         {
+            if (ObjectManager.Player.ChampionName != "Amumu")
+                return;
+
             (_menu = new Menu("AmumuSharp", "AmumuSharp", true)).AddToMainMenu();
 
             var targetSelectorMenu = new Menu("Target Selector", "TargetSelector");

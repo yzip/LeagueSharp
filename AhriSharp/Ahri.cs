@@ -26,6 +26,9 @@ namespace AhriSharp
 
         public Ahri()
         {
+            if (ObjectManager.Player.ChampionName != "Ahri")
+                return;
+
             (_menu = new Menu("AhriSharp", "AhriSharp", true)).AddToMainMenu();
 
             var targetSelectorMenu = new Menu("Target Selector", "TargetSelector");

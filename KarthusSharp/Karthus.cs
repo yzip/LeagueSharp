@@ -34,6 +34,9 @@ namespace KarthusSharp
 
         public Karthus()
         {
+            if (ObjectManager.Player.ChampionName != "Karthus")
+                return;
+
             (_menu = new Menu("KarthusSharp", "KarthusSharp", true)).AddToMainMenu();
 
             var targetSelectorMenu = new Menu("Target Selector", "TargetSelector");

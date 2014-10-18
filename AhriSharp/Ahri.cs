@@ -10,6 +10,10 @@ using SharpDX;
 
 namespace AhriSharp
 {
+    /*
+     * - Add dedicated harass key
+     * */
+
     class Ahri
     {
         private Menu _menu;

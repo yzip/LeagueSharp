@@ -10,7 +10,7 @@ namespace KarthusSharp
     /*
      * LaneClear:
      * - allow AA on Tower, Ward (don't Q wards)
-     * - improve in early game (possible?)
+     * - improve somehow
      * 
      * Ult KS:
      * - don't KS anymore if enemy is recalling and would arrive base before ult went through (have to include BaseUlt functionality)
@@ -92,6 +92,7 @@ namespace KarthusSharp
 
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnGameUpdate += Game_OnGameUpdate;
+            Orbwalking.BeforeAttack += Orbwalking_BeforeAttack;
 
             Game.PrintChat("<font color=\"#1eff00\">KarthusSharp by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
         }
@@ -103,27 +104,27 @@ namespace KarthusSharp
             switch (_orbwalker.ActiveMode)
             {
                 case Orbwalking.OrbwalkingMode.Combo:
-                    _orbwalker.SetAttacks(_menu.Item("comboAA").GetValue<bool>() || ObjectManager.Player.Mana < 100); //if no mana, allow auto attacks!
+                    _orbwalker.SetAttack(_menu.Item("comboAA").GetValue<bool>() || ObjectManager.Player.Mana < 100); //if no mana, allow auto attacks!
                     _orbwalker.SetMovement(_menu.Item("comboMove").GetValue<bool>());
                     Combo();
                     break;
                 case Orbwalking.OrbwalkingMode.Mixed:
-                    _orbwalker.SetAttacks(true);
+                    _orbwalker.SetAttack(true);
                     _orbwalker.SetMovement(_menu.Item("harassMove").GetValue<bool>());
                     Harass();
                     break;
                 case Orbwalking.OrbwalkingMode.LaneClear:
-                    _orbwalker.SetAttacks(_menu.Item("farmAA").GetValue<bool>() || ObjectManager.Player.Mana < 100);
+                    _orbwalker.SetAttack(_menu.Item("farmAA").GetValue<bool>() || ObjectManager.Player.Mana < 100);
                     _orbwalker.SetMovement(_menu.Item("farmMove").GetValue<bool>());
                     LaneClear();
                     break;
                 case Orbwalking.OrbwalkingMode.LastHit:
-                    _orbwalker.SetAttacks(true);
+                    _orbwalker.SetAttack(true);
                     _orbwalker.SetMovement(_menu.Item("farmMove").GetValue<bool>());
                     LastHit();
                     break;
                 default:
-                    _orbwalker.SetAttacks(true);
+                    _orbwalker.SetAttack(true);
                     _orbwalker.SetMovement(true);
                     RegulateEState();
 
@@ -134,7 +135,19 @@ namespace KarthusSharp
 
                     break;
             }
+        }
 
+        void Orbwalking_BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
+        {
+            if (_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+            {
+                args.Process = !_spellQ.IsReady();
+            }
+            else if(_orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
+            {
+                bool farmQ = _menu.Item("farmQ").GetValue<StringList>().SelectedIndex == 0 || _menu.Item("farmQ").GetValue<StringList>().SelectedIndex == 2;
+                args.Process = !(farmQ && _spellQ.IsReady() && GetManaPercent() >= _menu.Item("farmQPercent").GetValue<Slider>().Value);
+            }
         }
 
         public float GetManaPercent()
@@ -211,6 +224,8 @@ namespace KarthusSharp
             if (farmQ && _spellQ.IsReady())
             {
                 minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellQ.Range, MinionTypes.All, MinionTeam.NotAlly);
+                minions.RemoveAll(x => x.MaxHealth <= 5); //filter wards the ghetto method lel
+
                 jungleMobs = minions.Any(x => x.Team == GameObjectTeam.Neutral);
 
                 _spellQ.Width = SpellQWidth;
@@ -225,6 +240,7 @@ namespace KarthusSharp
             _comboE = false;
 
             minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellE.Range, MinionTypes.All, MinionTeam.NotAlly);
+            minions.RemoveAll(x => x.MaxHealth <= 5); //filter wards the ghetto method lel
 
             jungleMobs = minions.Any(x => x.Team == GameObjectTeam.Neutral);
 
@@ -242,10 +258,12 @@ namespace KarthusSharp
 
             if (!farmQ || !_spellQ.IsReady())
                 return;
+
             var minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellQ.Range, MinionTypes.All, MinionTeam.NotAlly);
+            minions.RemoveAll(x => x.MaxHealth <= 5); //filter wards the ghetto method lel
 
             foreach (var minion in minions.Where(x => ObjectManager.Player.GetSpellDamage(x, SpellSlot.Q, 1) >= //FirstDamage = multitarget hit, differentiate! (check radius around mob predicted pos)
-                                                      HealthPrediction.GetHealthPrediction(x, (int)(_spellQ.Delay * 1000), 90)))
+                                                      HealthPrediction.GetHealthPrediction(x, (int)(_spellQ.Delay * 1000), 85)))
             {
                 CastQ(minion, _menu.Item("farmQPercent").GetValue<Slider>().Value);
             }
@@ -256,6 +274,8 @@ namespace KarthusSharp
             if (!_spellR.IsReady())
                 return;
             var time = Environment.TickCount;
+
+            List<Obj_AI_Hero> ultTargets = new List<Obj_AI_Hero>();
 
             foreach (var target in Program.Helper.EnemyInfo.Where(x => //need to check if recently recalled (for cases when no mana for baseult)
                 x.Player.IsValid &&
@@ -270,6 +290,28 @@ namespace KarthusSharp
                         continue;
 
                 if (IsInPassiveForm() || !Program.Helper.EnemyTeam.Any(x => x.IsValid && !x.IsDead && (x.IsVisible || (!x.IsVisible && time - Program.Helper.GetPlayerInfo(x).LastSeen < 2750)) && ObjectManager.Player.Distance(x) < 1600)) //any other enemies around? dont ult unless in passive form
+                    ultTargets.Add(target.Player);
+            }
+
+            int targets = ultTargets.Count();
+
+            if(targets > 0)
+            {
+                //dont ult if Zilean is nearby the target/is the target and his ult is up
+                var zilean = Program.Helper.EnemyTeam.FirstOrDefault(x => x.ChampionName == "Zilean" && (x.IsVisible || (!x.IsVisible && time - Program.Helper.GetPlayerInfo(x).LastSeen < 3000)) && (x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Ready ||
+                            (x.Spellbook.GetSpell(SpellSlot.R).Level > 0 &&
+                            x.Spellbook.CanUseSpell(SpellSlot.R) == SpellState.Surpressed &&
+                            x.Mana >= x.Spellbook.GetSpell(SpellSlot.R).ManaCost)));
+
+                if (zilean != null)
+                {
+                    int inZileanRange = ultTargets.Count(x => x.Distance(zilean) < 2500); //if multiple, shoot regardless
+
+                    if(inZileanRange > 0)
+                        targets--; //remove one target, because zilean can save one
+                }
+
+                if(targets > 0)
                     _spellR.Cast(ObjectManager.Player.Position, Packets());
             }
         }

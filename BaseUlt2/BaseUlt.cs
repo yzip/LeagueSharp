@@ -10,6 +10,10 @@ using Color = System.Drawing.Color;
 
 namespace BaseUlt2
 {
+    /*
+     * - Exclude specific champiosn from being baseulted
+     * */
+
     class BaseUlt
     {
         private static Menu _menu;

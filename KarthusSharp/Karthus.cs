@@ -11,9 +11,16 @@ namespace KarthusSharp
      * LaneClear:
      * - allow AA on Tower, Ward (don't Q wards)
      * - improve somehow
+     * - https://github.com/trus/L-/blob/master/TRUSt%20in%20my%20Karthus/Program.cs
      * 
      * Ult KS:
      * - don't KS anymore if enemy is recalling and would arrive base before ult went through (have to include BaseUlt functionality)
+     * - It also ulted while taking hits from enemy tower.
+     * 
+     * Misc:
+     * - add don't use spells until lvl x etc.
+     * - Recode
+     * - Onspellcast if q farm enabled, disable AA in beforeattack and start timer that lasts casttime
     * */
 
     class Karthus
@@ -180,7 +187,7 @@ namespace KarthusSharp
                         if (ObjectManager.Player.Distance(target.ServerPosition) <= _spellE.Range && enoughMana)
                         {
                             _comboE = true;
-                            _spellE.Cast(ObjectManager.Player.Position, Packets());
+                            _spellE.CastOnUnit(ObjectManager.Player, Packets());
                         }
                     }
                     else if (!enoughMana)
@@ -247,7 +254,7 @@ namespace KarthusSharp
             var enoughMana = GetManaPercent() > _menu.Item("farmEPercent").GetValue<Slider>().Value;
 
             if (enoughMana && ((minions.Count >= 3 || jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1))
-                _spellE.Cast(ObjectManager.Player.Position, Packets());
+                _spellE.CastOnUnit(ObjectManager.Player, Packets());
             else if (!enoughMana || ((minions.Count <= 2 && !jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2))
                 RegulateEState(!enoughMana);
         }
@@ -263,7 +270,7 @@ namespace KarthusSharp
             minions.RemoveAll(x => x.MaxHealth <= 5); //filter wards the ghetto method lel
 
             foreach (var minion in minions.Where(x => ObjectManager.Player.GetSpellDamage(x, SpellSlot.Q, 1) >= //FirstDamage = multitarget hit, differentiate! (check radius around mob predicted pos)
-                                                      HealthPrediction.GetHealthPrediction(x, (int)(_spellQ.Delay * 1000), 85)))
+                                                      HealthPrediction.GetHealthPrediction(x, (int)(_spellQ.Delay * 1000))))
             {
                 CastQ(minion, _menu.Item("farmQPercent").GetValue<Slider>().Value);
             }
@@ -312,7 +319,7 @@ namespace KarthusSharp
                 }
 
                 if(targets > 0)
-                    _spellR.Cast(ObjectManager.Player.Position, Packets());
+                    _spellR.CastOnUnit(ObjectManager.Player, Packets());
             }
         }
 
@@ -326,7 +333,7 @@ namespace KarthusSharp
 
             if (!ignoreTargetChecks && (target != null || (!_comboE && minions.Count != 0)))
                 return;
-            _spellE.Cast(ObjectManager.Player.Position, Packets());
+            _spellE.CastOnUnit(ObjectManager.Player, Packets());
             _comboE = false;
         }
 

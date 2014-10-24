@@ -12,6 +12,7 @@ namespace BaseUlt2
 {
     /*
      * - Exclude specific champiosn from being baseulted
+     * - baseult friends menu doesnt work as Karthus
      * */
 
     class BaseUlt

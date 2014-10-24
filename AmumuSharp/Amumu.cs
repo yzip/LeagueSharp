@@ -125,7 +125,7 @@ namespace AmumuSharp
                 return;
 
             if (_spellE.GetPrediction(target).UnitPosition.Distance(ObjectManager.Player.ServerPosition) <= _spellE.Range)
-                _spellE.Cast(ObjectManager.Player.Position, Packets());
+                _spellE.CastOnUnit(ObjectManager.Player, Packets());
         }
 
         public float GetManaPercent()
@@ -187,7 +187,7 @@ namespace AmumuSharp
                         if (ObjectManager.Player.Distance(target.ServerPosition) <= _spellW.Range && enoughMana)
                         {
                             _comboW = true;
-                            _spellW.Cast(ObjectManager.Player.Position, Packets());
+                            _spellW.CastOnUnit(ObjectManager.Player, Packets());
                         }
                     }
                     else if (!enoughMana)
@@ -235,7 +235,7 @@ namespace AmumuSharp
             var enoughMana = GetManaPercent() > _menu.Item("farmWPercent" + ObjectManager.Player.ChampionName).GetValue<Slider>().Value;
 
             if (enoughMana && ((minions.Count >= 3 || anyJungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState == 1))
-                _spellW.Cast(ObjectManager.Player.Position, Packets());
+                _spellW.CastOnUnit(ObjectManager.Player, Packets());
             else if (!enoughMana || ((minions.Count <= 2 && !anyJungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState == 2))
                 RegulateWState(!enoughMana);
         }
@@ -251,7 +251,7 @@ namespace AmumuSharp
             if (!ignoreTargetChecks && (target != null || (!_comboW && minions.Count != 0)))
                 return;
 
-            _spellW.Cast(ObjectManager.Player.Position, Packets());
+            _spellW.CastOnUnit(ObjectManager.Player, Packets());
             _comboW = false;
         }
 
@@ -269,7 +269,7 @@ namespace AmumuSharp
         {
             if (!_spellR.IsReady())
                 return;
-            _spellR.Cast(ObjectManager.Player.Position, Packets());
+            _spellR.CastOnUnit(ObjectManager.Player, Packets());
         }
 
         void Drawing_OnDraw(EventArgs args)

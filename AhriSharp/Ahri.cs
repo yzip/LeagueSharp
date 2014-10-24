@@ -12,6 +12,7 @@ namespace AhriSharp
 {
     /*
      * - Add dedicated harass key
+     * ahri dfg if charmed
      * */
 
     class Ahri
@@ -195,7 +196,7 @@ namespace AhriSharp
             var target = SimpleTs.GetTarget(_spellW.Range, SimpleTs.DamageType.Magical);
 
             if (target != null || ignoreTargetCheck)
-                _spellW.Cast(ObjectManager.Player.Position, Packets());
+                _spellW.CastOnUnit(ObjectManager.Player, Packets());
         }
 
         void Combo()

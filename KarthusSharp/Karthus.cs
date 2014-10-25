@@ -187,7 +187,7 @@ namespace KarthusSharp
                         if (ObjectManager.Player.Distance(target.ServerPosition) <= _spellE.Range && enoughMana)
                         {
                             _comboE = true;
-                            _spellE.CastOnUnit(ObjectManager.Player, Packets());
+                            _spellE.Cast(Packets());
                         }
                     }
                     else if (!enoughMana)
@@ -254,7 +254,7 @@ namespace KarthusSharp
             var enoughMana = GetManaPercent() > _menu.Item("farmEPercent").GetValue<Slider>().Value;
 
             if (enoughMana && ((minions.Count >= 3 || jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1))
-                _spellE.CastOnUnit(ObjectManager.Player, Packets());
+                _spellE.Cast(Packets());
             else if (!enoughMana || ((minions.Count <= 2 && !jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2))
                 RegulateEState(!enoughMana);
         }
@@ -319,7 +319,7 @@ namespace KarthusSharp
                 }
 
                 if(targets > 0)
-                    _spellR.CastOnUnit(ObjectManager.Player, Packets());
+                    _spellR.Cast(Packets());
             }
         }
 
@@ -333,7 +333,7 @@ namespace KarthusSharp
 
             if (!ignoreTargetChecks && (target != null || (!_comboE && minions.Count != 0)))
                 return;
-            _spellE.CastOnUnit(ObjectManager.Player, Packets());
+            _spellE.Cast(Packets());
             _comboE = false;
         }
 

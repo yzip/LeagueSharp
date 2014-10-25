@@ -106,6 +106,8 @@ namespace KarthusSharp
 
         void Game_OnGameUpdate(EventArgs args)
         {
+            _spellR.Cast(Packets());
+
             if (_menu.Item("ultKS").GetValue<bool>())
                 UltKs();
             switch (_orbwalker.ActiveMode)

@@ -106,8 +106,6 @@ namespace KarthusSharp
 
         void Game_OnGameUpdate(EventArgs args)
         {
-            _spellR.Cast(Packets());
-
             if (_menu.Item("ultKS").GetValue<bool>())
                 UltKs();
             switch (_orbwalker.ActiveMode)
@@ -164,9 +162,9 @@ namespace KarthusSharp
             return (ObjectManager.Player.Mana / ObjectManager.Player.MaxMana) * 100f;
         }
 
-        public bool Packets()
+        public bool PacketsNoLel()
         {
-            return false;// _menu.Item("packetCast").GetValue<bool>();
+            return _menu.Item("packetCast").GetValue<bool>();
         }
 
         bool Combo()
@@ -189,7 +187,7 @@ namespace KarthusSharp
                         if (ObjectManager.Player.Distance(target.ServerPosition) <= _spellE.Range && enoughMana)
                         {
                             _comboE = true;
-                            _spellE.Cast(Packets());
+                            _spellE.Cast();
                         }
                     }
                     else if (!enoughMana)
@@ -256,7 +254,7 @@ namespace KarthusSharp
             var enoughMana = GetManaPercent() > _menu.Item("farmEPercent").GetValue<Slider>().Value;
 
             if (enoughMana && ((minions.Count >= 3 || jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1))
-                _spellE.Cast(Packets());
+                _spellE.Cast();
             else if (!enoughMana || ((minions.Count <= 2 && !jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2))
                 RegulateEState(!enoughMana);
         }
@@ -321,7 +319,7 @@ namespace KarthusSharp
                 }
 
                 if(targets > 0)
-                    _spellR.Cast(Packets());
+                    _spellR.Cast();
             }
         }
 
@@ -335,7 +333,7 @@ namespace KarthusSharp
 
             if (!ignoreTargetChecks && (target != null || (!_comboE && minions.Count != 0)))
                 return;
-            _spellE.Cast(Packets());
+            _spellE.Cast();
             _comboE = false;
         }
 
@@ -346,7 +344,7 @@ namespace KarthusSharp
             if (target == null)
                 return;
             _spellQ.Width = GetDynamicQWidth(target);
-            _spellQ.Cast(target, Packets());
+            _spellQ.Cast(target);
         }
 
         void CastQ(Vector2 pos, int minManaPercent = 0)
@@ -354,7 +352,7 @@ namespace KarthusSharp
             if (!_spellQ.IsReady())
                 return;
             if (GetManaPercent() >= minManaPercent)
-                _spellQ.Cast(pos, Packets());
+                _spellQ.Cast(pos);
         }
 
         void CastW(Obj_AI_Base target, int minManaPercent = 0)
@@ -364,7 +362,7 @@ namespace KarthusSharp
             if (target == null)
                 return;
             _spellW.Width = GetDynamicWWidth(target);
-            _spellW.Cast(target, Packets());
+            _spellW.Cast(target);
         }
 
         float GetDynamicWWidth(Obj_AI_Base target)

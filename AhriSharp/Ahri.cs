@@ -113,7 +113,7 @@ namespace AhriSharp
             return (ObjectManager.Player.Mana / ObjectManager.Player.MaxMana) * 100f;
         }
 
-        public bool Packets()
+        public bool PacketsNoLel()
         {
             return _menu.Item("packetCast").GetValue<bool>();
         }
@@ -162,7 +162,7 @@ namespace AhriSharp
             var target = SimpleTs.GetTarget(_spellE.Range, SimpleTs.DamageType.Magical);
 
             if (target != null)
-                _spellE.CastIfHitchanceEquals(target, HitChance.High, Packets());
+                _spellE.CastIfHitchanceEquals(target, HitChance.High);
         }
 
         void CastQ()
@@ -176,7 +176,7 @@ namespace AhriSharp
             {
                 Vector3 predictedPos = Prediction.GetPrediction(target, _spellQ.Delay).UnitPosition; //correct pos currently not possible with spell acceleration
                 _spellQ.Speed = GetDynamicQSpeed(ObjectManager.Player.Distance(predictedPos));
-                _spellQ.CastIfHitchanceEquals(target, HitChance.High, Packets());
+                _spellQ.CastIfHitchanceEquals(target, HitChance.High);
             }
         }
 
@@ -185,7 +185,7 @@ namespace AhriSharp
             if (!_spellQ.IsReady())
                 return;
 
-            _spellQ.Cast(pos, Packets());
+            _spellQ.Cast(pos);
         }
 
         void CastW(bool ignoreTargetCheck = false)
@@ -196,7 +196,7 @@ namespace AhriSharp
             var target = SimpleTs.GetTarget(_spellW.Range, SimpleTs.DamageType.Magical);
 
             if (target != null || ignoreTargetCheck)
-                _spellW.Cast(Packets());
+                _spellW.Cast();
         }
 
         void Combo()
@@ -212,7 +212,7 @@ namespace AhriSharp
 
             if (_menu.Item("comboR").GetValue<bool>() && _spellR.IsReady())
                 if (OkToUlt())
-                    _spellR.Cast(Game.CursorPos, Packets());
+                    _spellR.Cast(Game.CursorPos);
         }
 
         List<SpellSlot> GetSpellCombo()

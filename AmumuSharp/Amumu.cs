@@ -125,7 +125,7 @@ namespace AmumuSharp
                 return;
 
             if (_spellE.GetPrediction(target).UnitPosition.Distance(ObjectManager.Player.ServerPosition) <= _spellE.Range)
-                _spellE.Cast(Packets());
+                _spellE.Cast();
         }
 
         public float GetManaPercent()
@@ -133,7 +133,7 @@ namespace AmumuSharp
             return (ObjectManager.Player.Mana / ObjectManager.Player.MaxMana) * 100f;
         }
 
-        public bool Packets()
+        public bool PacketsNoLel()
         {
             return _menu.Item("packetCast").GetValue<bool>();
         }
@@ -187,7 +187,7 @@ namespace AmumuSharp
                         if (ObjectManager.Player.Distance(target.ServerPosition) <= _spellW.Range && enoughMana)
                         {
                             _comboW = true;
-                            _spellW.Cast(Packets());
+                            _spellW.Cast();
                         }
                     }
                     else if (!enoughMana)
@@ -235,7 +235,7 @@ namespace AmumuSharp
             var enoughMana = GetManaPercent() > _menu.Item("farmWPercent" + ObjectManager.Player.ChampionName).GetValue<Slider>().Value;
 
             if (enoughMana && ((minions.Count >= 3 || anyJungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState == 1))
-                _spellW.Cast(Packets());
+                _spellW.Cast();
             else if (!enoughMana || ((minions.Count <= 2 && !anyJungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState == 2))
                 RegulateWState(!enoughMana);
         }
@@ -251,7 +251,7 @@ namespace AmumuSharp
             if (!ignoreTargetChecks && (target != null || (!_comboW && minions.Count != 0)))
                 return;
 
-            _spellW.Cast(Packets());
+            _spellW.Cast();
             _comboW = false;
         }
 
@@ -262,14 +262,14 @@ namespace AmumuSharp
             if (target == null || !target.IsValidTarget())
                 return;
 
-            _spellQ.CastIfHitchanceEquals(target, hitChance, Packets());
+            _spellQ.CastIfHitchanceEquals(target, hitChance);
         }
 
         void CastR()
         {
             if (!_spellR.IsReady())
                 return;
-            _spellR.Cast(Packets());
+            _spellR.Cast();
         }
 
         void Drawing_OnDraw(EventArgs args)

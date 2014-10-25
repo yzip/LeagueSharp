@@ -111,11 +111,8 @@ namespace KarthusSharp
             switch (_orbwalker.ActiveMode)
             {
                 case Orbwalking.OrbwalkingMode.Combo:
-                    //_orbwalker.SetAttack(_menu.Item("comboAA").GetValue<bool>() || ObjectManager.Player.Mana < 100); //if no mana, allow auto attacks!
-
-                    //Game.PrintChat("k: " + (_menu.Item("comboAA").GetValue<bool>() || ObjectManager.Player.Mana < 100));
-
-                    //_orbwalker.SetMovement(_menu.Item("comboMove").GetValue<bool>());
+                    _orbwalker.SetAttack(_menu.Item("comboAA").GetValue<bool>() || ObjectManager.Player.Mana < 100); //if no mana, allow auto attacks!
+                    _orbwalker.SetMovement(_menu.Item("comboMove").GetValue<bool>());
                     Combo();
                     break;
                 case Orbwalking.OrbwalkingMode.Mixed:

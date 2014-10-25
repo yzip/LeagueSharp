@@ -107,6 +107,7 @@ namespace KarthusSharp
         void Game_OnGameUpdate(EventArgs args)
         {
             _spellR.Cast(Packets());
+            Game.PrintChat("pls");
 
             if (_menu.Item("ultKS").GetValue<bool>())
                 UltKs();

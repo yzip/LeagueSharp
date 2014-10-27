@@ -253,10 +253,8 @@ namespace KarthusSharp
 
             var enoughMana = GetManaPercent() > _menu.Item("farmEPercent").GetValue<Slider>().Value;
 
-            return; ///////////////////
-
             if (enoughMana && ((minions.Count >= 3 || jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 1))
-                _spellE.Cast();
+                _spellE.CastOnUnit(ObjectManager.Player);
             else if (!enoughMana || ((minions.Count <= 2 && !jungleMobs) && ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2))
                 RegulateEState(!enoughMana);
         }
@@ -335,7 +333,7 @@ namespace KarthusSharp
 
             if (!ignoreTargetChecks && (target != null || (!_comboE && minions.Count != 0)))
                 return;
-            _spellE.Cast();
+            _spellE.CastOnUnit(ObjectManager.Player);
             _comboE = false;
         }
 

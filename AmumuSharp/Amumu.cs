@@ -125,7 +125,7 @@ namespace AmumuSharp
                 return;
 
             if (_spellE.GetPrediction(target).UnitPosition.Distance(ObjectManager.Player.ServerPosition) <= _spellE.Range)
-                _spellE.Cast();
+                _spellE.CastOnUnit(ObjectManager.Player);
         }
 
         public float GetManaPercent()

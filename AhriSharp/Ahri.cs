@@ -196,7 +196,7 @@ namespace AhriSharp
             var target = SimpleTs.GetTarget(_spellW.Range, SimpleTs.DamageType.Magical);
 
             if (target != null || ignoreTargetCheck)
-                _spellW.Cast();
+                _spellW.CastOnUnit(ObjectManager.Player);
         }
 
         void Combo()

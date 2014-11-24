@@ -253,8 +253,13 @@ namespace BaseUlt2
                         recall.Duration -= 4000;
                 }
 
+                foreach(var mastery in champ.Masteries.Where(x => x.Points == 1))
+                {
+                    Game.PrintChat("has mastery: " + mastery.Id + " page: " + mastery.Page);
+                }
                 if (champ.Masteries.Any(x => x.Page == MasteryPage.Utility && x.Id == 65 && x.Points == 1))
                 {
+
                     recall.Duration -= Map == Utility.Map.MapType.CrystalScar ? 500 : 1000; //phasewalker mastery
                     Game.PrintChat("has mastery");
                 }

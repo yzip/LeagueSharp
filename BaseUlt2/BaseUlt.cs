@@ -243,10 +243,25 @@ namespace BaseUlt2
                 recall.Duration = 3500;
             else //use masteries to detect recall duration, because spelldata is not initialized yet when enemy has not been seen
             {
-                recall.Duration = Map == Utility.Map.MapType.CrystalScar ? 4500 : 8000;
+                if (Map == Utility.Map.MapType.CrystalScar)
+                    recall.Duration = 4500;
+                else
+                {
+                    recall.Duration = 8000;
+
+                    if(champ.HasBuff("Hand of Baron"))
+                        recall.Duration -= 4000;
+                }
 
                 if (champ.Masteries.Any(x => x.Page == MasteryPage.Utility && x.Id == 65 && x.Points == 1))
+                {
                     recall.Duration -= Map == Utility.Map.MapType.CrystalScar ? 500 : 1000; //phasewalker mastery
+                    Game.PrintChat("has mastery");
+                }
+                else
+                {
+                    Game.PrintChat("doesnt have mastery");
+                }
             }
 
             var time = Environment.TickCount - Game.Ping;

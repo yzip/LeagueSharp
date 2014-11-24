@@ -253,11 +253,9 @@ namespace BaseUlt2
                         recall.Duration -= 4000;
                 }
 
-                Game.PrintChat("kek");
-
                 foreach(var mastery in champ.Masteries)
                 {
-                    Game.PrintChat("has mastery: " + mastery.Id + " page: " + mastery.Page);
+                    Game.PrintChat("has mastery: " + mastery.Id + " page: " + mastery.Page + " points: " + mastery.Points);
                 }
                 if (champ.Masteries.Any(x => x.Page == MasteryPage.Utility && x.Id == 65 && x.Points == 1))
                 {

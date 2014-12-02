@@ -14,22 +14,40 @@ namespace Kappa
     {
         static void Main(string[] args)
         {
+
+            Game.PrintChat("kappaHD");
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
-        }
-
-        static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
-        {
-
         }
 
         private static void Game_OnGameLoad(EventArgs args)
         {
+            try
+            {
+                if (Activator.CreateInstance(null, "Kappa." + ObjectManager.Player.ChampionName) != null)
+                {
+                    Game.PrintChat("Ok!");
+                }
+            }
+            catch(Exception e)
+            {
+                Game.PrintChat("Error!");
+            }
+        }
+    }
+    
+    class Champion
+    {
+        public Champion()
+        {
 
         }
+    }
 
-        static void Game_OnGameUpdate(EventArgs args)
+    class Ahri : Champion
+    {
+        public Ahri()
         {
-            
+            Game.PrintChat("Loaded lel");
         }
     }
 }

@@ -80,7 +80,7 @@ namespace BaseUlt3
             if (compatibleChamp)
                 Game.OnGameUpdate += Game_OnGameUpdate;
 
-            Game.PrintChat("<font color=\"#1eff00\">BaseUlt3 by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
+            Game.PrintChat("<font color=\"#1eff00\">BaseUlt3 (alpha, not yet for using purposes) by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
         }
 
         public bool IsCompatibleChamp(String championName)

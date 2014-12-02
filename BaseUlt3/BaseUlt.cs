@@ -145,20 +145,24 @@ namespace BaseUlt3
                             CanUseUlt(x)))
             {
                 if (UltSpellData[champ.ChampionName].Collision && IsCollidingWithChamps(champ, EnemySpawnPos, UltSpellData[champ.ChampionName].Width))
+                {
+                    enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = 0;
                     continue;
+                }
 
                 //increase timeneeded if it should arrive earlier, decrease if later
-                var timeneeded = GetUltTravelTime(champ, UltSpellData[champ.ChampionName].Speed, UltSpellData[champ.ChampionName].Delay, EnemySpawnPos) - 55;
+                var timeneeded = GetUltTravelTime(champ, UltSpellData[champ.ChampionName].Speed, UltSpellData[champ.ChampionName].Delay, EnemySpawnPos) - 65;
 
-                if (timeneeded - enemyInfo.RecallInfo.GetRecallCountdown() > 60)
+                if (enemyInfo.RecallInfo.GetRecallCountdown() >= timeneeded)
+                    enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = (float)Damage.GetSpellDamage(champ, enemyInfo.Player, SpellSlot.R, UltSpellData[champ.ChampionName].SpellStage) * UltSpellData[champ.ChampionName].DamageMultiplicator;
+
+                if (enemyInfo.RecallInfo.GetRecallCountdown() < timeneeded)
+                {
+                    enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = 0;
                     continue;
+                }
 
-                enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = (float)Damage.GetSpellDamage(champ, enemyInfo.Player, SpellSlot.R, UltSpellData[champ.ChampionName].SpellStage) * UltSpellData[champ.ChampionName].DamageMultiplicator;
-
-                if (!(enemyInfo.RecallInfo.GetRecallCountdown() <= timeneeded))
-                    continue;
-
-                if (champ.IsMe)
+                if (champ.IsMe && enemyInfo.RecallInfo.GetRecallCountdown() - timeneeded < 60)
                     shoot = true;
             }
 

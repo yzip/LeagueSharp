@@ -138,7 +138,7 @@ namespace BaseUlt3
         {
             bool shoot = false;
 
-            foreach (Obj_AI_Hero champ in Allies.Where(x =>
+            foreach (Obj_AI_Hero champ in Allies.Where(x => //gathering the damage from allies should probably be done once only with timers
                             x.IsValid &&
                             !x.IsDead && 
                             ((x.IsMe && !x.IsStunned) || TeamUlt.Items.Any(item => item.GetValue<bool>() && item.Name == x.ChampionName)) &&
@@ -162,7 +162,7 @@ namespace BaseUlt3
                     continue;
                 }
 
-                if (champ.IsMe && enemyInfo.RecallInfo.GetRecallCountdown() - timeneeded < 60)
+                if (champ.IsMe && enemyInfo.RecallInfo.GetRecallCountdown() - timeneeded < 65)
                     shoot = true;
             }
 
@@ -297,23 +297,17 @@ namespace BaseUlt3
                         recall.Duration -= Map == Utility.Map.MapType.CrystalScar ? 500 : 1000; //phasewalker mastery
                 }
 
-                if (!RecallT.ContainsKey(recall.UnitNetworkId))
-                    RecallT.Add(recall.UnitNetworkId, time); //will result in status RecallStarted, which would be wrong if the assembly was to be loaded while somebody recalls
+                if (RecallT[recall.UnitNetworkId] == 0)
+                    RecallT[recall.UnitNetworkId] = time;
                 else
                 {
-                    if (RecallT[recall.UnitNetworkId] == 0)
-                        RecallT[recall.UnitNetworkId] = time;
+                    if (time - RecallT[recall.UnitNetworkId] > recall.Duration - 75)
+                        recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportEnd : Packet.S2C.Recall.RecallStatus.RecallFinished;
                     else
-                    {
-                        if (time - RecallT[recall.UnitNetworkId] > recall.Duration - 75)
-                            recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportEnd : Packet.S2C.Recall.RecallStatus.RecallFinished;
-                        else
-                            recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportAbort : Packet.S2C.Recall.RecallStatus.RecallAborted;
+                        recall.Status = teleport ? Packet.S2C.Recall.RecallStatus.TeleportAbort : Packet.S2C.Recall.RecallStatus.RecallAborted;
 
-                        RecallT[recall.UnitNetworkId] = 0; //recall aborted or finished, reset status
-                    }
+                    RecallT[recall.UnitNetworkId] = 0; //recall aborted or finished, reset status
                 }
-
             }
 
             return recall;

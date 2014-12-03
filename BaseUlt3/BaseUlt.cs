@@ -155,8 +155,7 @@ namespace BaseUlt3
 
                 if (enemyInfo.RecallInfo.GetRecallCountdown() >= timeneeded)
                     enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = (float)Damage.GetSpellDamage(champ, enemyInfo.Player, SpellSlot.R, UltSpellData[champ.ChampionName].SpellStage) * UltSpellData[champ.ChampionName].DamageMultiplicator;
-
-                if (enemyInfo.RecallInfo.GetRecallCountdown() < timeneeded)
+                else if (enemyInfo.RecallInfo.GetRecallCountdown() < timeneeded)
                 {
                     enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = 0;
                     continue;
@@ -245,7 +244,6 @@ namespace BaseUlt3
             }
         }
 
-
         public Packet.S2C.Recall.Struct RecallDecode(byte[] data)
         {
             var time = Environment.TickCount - Game.Ping;
@@ -297,7 +295,7 @@ namespace BaseUlt3
                         recall.Duration -= Map == Utility.Map.MapType.CrystalScar ? 500 : 1000; //phasewalker mastery
                 }
 
-                if (RecallT[recall.UnitNetworkId] == 0)
+                if (!RecallT.ContainsKey(recall.UnitNetworkId) || RecallT[recall.UnitNetworkId] == 0)
                     RecallT[recall.UnitNetworkId] = time;
                 else
                 {

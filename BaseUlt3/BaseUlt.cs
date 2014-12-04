@@ -5,8 +5,10 @@ using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+using SharpDX.Direct3D9;
 using Collision = LeagueSharp.Common.Collision;
 using Color = System.Drawing.Color;
+using Font = SharpDX.Direct3D9.Font;
 
 namespace BaseUlt3
 {
@@ -38,6 +40,15 @@ namespace BaseUlt3
         public Dictionary<int, int> RecallT = new Dictionary<int, int>();
 
         Vector3 EnemySpawnPos;
+
+        Font Text;
+
+        static float BarX = Drawing.Width * 0.425f;
+        float BarY = Drawing.Height * 0.80f;
+        static int BarWidth = (int)(Drawing.Width - 2 * BarX);
+        int BarHeight = 6;
+        int SeperatorHeight = 5;
+        static float Scale = (float)BarWidth / 8000;
 
         public BaseUlt()
         {
@@ -74,13 +85,19 @@ namespace BaseUlt3
 
             Ultimate = new Spell(SpellSlot.R);
 
+            Text = new Font(Drawing.Direct3DDevice, new FontDescription{FaceName = "Calibri", Height = 13, Width = 6, OutputPrecision = FontPrecision.Default, Quality = FontQuality.Default});
+            
             Game.OnGameProcessPacket += Game_OnGameProcessPacket;
+            Drawing.OnPreReset += Drawing_OnPreReset;
+            Drawing.OnPostReset += Drawing_OnPostReset;
             Drawing.OnDraw += Drawing_OnDraw;
+            AppDomain.CurrentDomain.DomainUnload += CurrentDomain_DomainUnload;
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_DomainUnload;
 
             if (compatibleChamp)
                 Game.OnGameUpdate += Game_OnGameUpdate;
 
-            Game.PrintChat("<font color=\"#1eff00\">BaseUlt3 (alpha, not yet for using purposes) by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
+            Game.PrintChat("<font color=\"#1eff00\">BaseUlt3 by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
         }
 
         public bool IsCompatibleChamp(String championName)
@@ -311,78 +328,58 @@ namespace BaseUlt3
             return recall;
         }
 
+        void Drawing_OnPostReset(EventArgs args)
+        {
+            Text.OnResetDevice();
+        }
+
+        void Drawing_OnPreReset(EventArgs args)
+        {
+            Text.OnLostDevice();
+        }
+
+        void CurrentDomain_DomainUnload(object sender, EventArgs e)
+        {
+            Text.Dispose();
+        }
+
         void Drawing_OnDraw(EventArgs args)
         {
-            if (!Menu.Item("showRecalls").GetValue<bool>())
+            if (!Menu.Item("showRecalls").GetValue<bool>() || Drawing.Direct3DDevice == null || Drawing.Direct3DDevice.IsDisposed)
                 return;
 
-            int index = -1;
-
-            float barX = Drawing.Width * 0.425f;
-            float barY = Drawing.Height * 0.81f;
-            int barWidth = (int)(Drawing.Width - 2 * barX);
-            int barHeight = 6;
-            int sideHeight = 4;
-
-            //DrawRect(barX, barY, barWidth, barHeight, 1, System.Drawing.Color.White);
-            //DrawRect(barX, barY - sideHeight, 1, sideHeight * 2 + barHeight, 1, System.Drawing.Color.White);
-            //DrawRect(barX + barWidth, barY - sideHeight, 1, sideHeight * 2 + barHeight, 1, System.Drawing.Color.White);
-
-            //DrawCircle2(new Vector2(barX, barY), 20, 2, 50, System.Drawing.Color.Red);
+            bool drawFrame = false;
 
             foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x =>
                 x.Player.IsValid &&
                 x.RecallInfo.IsPorting() &&
                 !x.Player.IsDead && //maybe redundant
-                x.RecallInfo.GetRecallCountdown() > 0).OrderBy(x => x.RecallInfo.GetRecallEnd()))
+                x.RecallInfo.GetRecallCountdown() > 0))
             {
-                index++;
-                Drawing.DrawText(Drawing.Width * 0.73f, Drawing.Height * 0.88f + (index * 15f), Color.Red, enemyInfo.RecallInfo.ToString());
+                DrawRect(BarX, BarY, (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarHeight, 1, System.Drawing.Color.FromArgb(100, System.Drawing.Color.White));
+                DrawRect(BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarY - SeperatorHeight, 0, SeperatorHeight + 1, 1, System.Drawing.Color.LightGray);
+
+                Text.DrawText(null, enemyInfo.Player.ChampionName, (int)BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - (float)(enemyInfo.Player.ChampionName.Length * Text.Description.Width)/2), (int)BarY - SeperatorHeight - Text.Description.Height - 1, new ColorBGRA(255, 255, 255, 255));
+
+                if (!drawFrame)
+                    drawFrame = true;
+            }
+
+            if(drawFrame)
+            {
+                DrawRect(BarX, BarY, BarWidth, BarHeight, 1, System.Drawing.Color.FromArgb(40, System.Drawing.Color.White));
+
+                DrawRect(BarX - 1, BarY + 1, 0, BarHeight, 1, System.Drawing.Color.White);
+                DrawRect(BarX - 1, BarY - 1, BarWidth + 2, 1, 1, System.Drawing.Color.White);
+                DrawRect(BarX - 1, BarY + BarHeight, BarWidth + 2, 1, 1, System.Drawing.Color.White);
+                DrawRect(BarX + 1 + BarWidth, BarY + 1, 0, BarHeight, 1, System.Drawing.Color.White);
             }
         }
 
-        public static void DrawRect(float x, float y, int width, int height, float thickness, System.Drawing.Color color)
+        public void DrawRect(float x, float y, int width, int height, float thickness, System.Drawing.Color color)
         {
             for (int i = 0; i < height; i++)
                 Drawing.DrawLine(x, y + i, x + width, y + i, thickness, color);
-        }
-
-        public static void DrawCircle2(Vector2 center, float radius, float thickness, float precision, System.Drawing.Color color) //precision try 0.5f
-        {
-            int vertices = (int)Math.Ceiling(360 * Math.Acos(2 * Math.Pow(1 - precision / radius, 2) - 1)); //360 * Math.Acos OR 2 * Math.PI * RadianToDegree(Math.Acos(x))
-
-            DrawPolygon(center, vertices, radius, thickness, color);
-        }
-
-        public static void DrawPolygon(Vector2 center, int vertices, float radius, float thickness, System.Drawing.Color color)
-        {
-            Vector2[] points = new Vector2[vertices];
-
-            double angle = 2 * Math.PI / vertices;
-
-            for (int i = 0; i < vertices; i++)
-            {
-                double x = center.X + radius * Math.Cos(i * angle);
-                double y = center.Y + radius * Math.Sin(i * angle);
-                points[i] = new Vector2((float)x, (float)y);
-            }
-
-            DrawPolygon(points, thickness, color);
-        }
-
-        public static void DrawPolygon(Vector2[] points, float thickness, System.Drawing.Color color) //should only be called with screencoords
-        {
-            for (int i = 0; i < points.Length; i++)
-                if (OnScreen(points[i]) || OnScreen(points[(i + 1) % points.Length]))
-                    Drawing.DrawLine(points[i].X, points[i].Y, points[(i + 1) % points.Length].X, points[(i + 1) % points.Length].Y, thickness, color); //% to set index to 0 in order to connect last point with first point to finish shape 
-        }
-
-        public static bool OnScreen(Vector2 screenpoint)
-        {
-            if (screenpoint.X >= 0 && screenpoint.Y >= 0 && screenpoint.X <= Drawing.Width && screenpoint.Y <= Drawing.Height)
-                return true;
-
-            return false;
         }
     }
 

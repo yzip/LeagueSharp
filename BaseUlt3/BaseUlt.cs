@@ -33,7 +33,7 @@ namespace BaseUlt3
         List<Obj_AI_Hero> Enemies;
         List<Obj_AI_Hero> Allies;
 
-        List<EnemyInfo> EnemyInfo = new List<EnemyInfo>();
+        public List<EnemyInfo> EnemyInfo = new List<EnemyInfo>();
 
         public Dictionary<int, int> RecallT = new Dictionary<int, int>();
 
@@ -318,6 +318,18 @@ namespace BaseUlt3
 
             int index = -1;
 
+            float barX = Drawing.Width * 0.425f;
+            float barY = Drawing.Height * 0.81f;
+            int barWidth = (int)(Drawing.Width - 2 * barX);
+            int barHeight = 6;
+            int sideHeight = 4;
+
+            //DrawRect(barX, barY, barWidth, barHeight, 1, System.Drawing.Color.White);
+            //DrawRect(barX, barY - sideHeight, 1, sideHeight * 2 + barHeight, 1, System.Drawing.Color.White);
+            //DrawRect(barX + barWidth, barY - sideHeight, 1, sideHeight * 2 + barHeight, 1, System.Drawing.Color.White);
+
+            //DrawCircle2(new Vector2(barX, barY), 20, 2, 50, System.Drawing.Color.Red);
+
             foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x =>
                 x.Player.IsValid &&
                 x.RecallInfo.IsPorting() &&
@@ -327,6 +339,50 @@ namespace BaseUlt3
                 index++;
                 Drawing.DrawText(Drawing.Width * 0.73f, Drawing.Height * 0.88f + (index * 15f), Color.Red, enemyInfo.RecallInfo.ToString());
             }
+        }
+
+        public static void DrawRect(float x, float y, int width, int height, float thickness, System.Drawing.Color color)
+        {
+            for (int i = 0; i < height; i++)
+                Drawing.DrawLine(x, y + i, x + width, y + i, thickness, color);
+        }
+
+        public static void DrawCircle2(Vector2 center, float radius, float thickness, float precision, System.Drawing.Color color) //precision try 0.5f
+        {
+            int vertices = (int)Math.Ceiling(360 * Math.Acos(2 * Math.Pow(1 - precision / radius, 2) - 1)); //360 * Math.Acos OR 2 * Math.PI * RadianToDegree(Math.Acos(x))
+
+            DrawPolygon(center, vertices, radius, thickness, color);
+        }
+
+        public static void DrawPolygon(Vector2 center, int vertices, float radius, float thickness, System.Drawing.Color color)
+        {
+            Vector2[] points = new Vector2[vertices];
+
+            double angle = 2 * Math.PI / vertices;
+
+            for (int i = 0; i < vertices; i++)
+            {
+                double x = center.X + radius * Math.Cos(i * angle);
+                double y = center.Y + radius * Math.Sin(i * angle);
+                points[i] = new Vector2((float)x, (float)y);
+            }
+
+            DrawPolygon(points, thickness, color);
+        }
+
+        public static void DrawPolygon(Vector2[] points, float thickness, System.Drawing.Color color) //should only be called with screencoords
+        {
+            for (int i = 0; i < points.Length; i++)
+                if (OnScreen(points[i]) || OnScreen(points[(i + 1) % points.Length]))
+                    Drawing.DrawLine(points[i].X, points[i].Y, points[(i + 1) % points.Length].X, points[(i + 1) % points.Length].Y, thickness, color); //% to set index to 0 in order to connect last point with first point to finish shape 
+        }
+
+        public static bool OnScreen(Vector2 screenpoint)
+        {
+            if (screenpoint.X >= 0 && screenpoint.Y >= 0 && screenpoint.X <= Drawing.Width && screenpoint.Y <= Drawing.Height)
+                return true;
+
+            return false;
         }
     }
 

@@ -15,7 +15,6 @@ namespace BaseUlt3
     /*
      * HandOfBaron buffname correct???
      * Phasewalker mastery detected correctly now?
-     * Draw: nice thin transparent progress bar with little champion icons moving on them
      * fixed? use for allies when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready
      * HPRegenRate, for 5 seconds or for 1?
      * */
@@ -178,7 +177,7 @@ namespace BaseUlt3
                     continue;
                 }
 
-                if (champ.IsMe && enemyInfo.RecallInfo.GetRecallCountdown() - timeneeded < 65)
+                if (champ.IsMe && enemyInfo.RecallInfo.GetRecallCountdown() - timeneeded < 60)
                     shoot = true;
             }
 

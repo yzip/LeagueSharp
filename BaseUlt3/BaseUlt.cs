@@ -179,7 +179,7 @@ namespace BaseUlt3
                 {
                     me = true;
 
-                    enemyInfo.RecallInfo.EstimatedShootT = (int)timeneeded;
+                    enemyInfo.RecallInfo.EstimatedShootT = timeneeded;
 
                     if(enemyInfo.RecallInfo.GetRecallCountdown() - timeneeded < 60)
                         ultNow = true;
@@ -313,7 +313,7 @@ namespace BaseUlt3
                 if (!enemyInfo.RecallInfo.LockedTarget)
                 {
                     DrawRect(BarX, BarY, (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarHeight, 1, System.Drawing.Color.FromArgb(100, System.Drawing.Color.White));
-                    DrawRect(BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarY - SeperatorHeight, 0, SeperatorHeight + 1, 1, System.Drawing.Color.LightGray);
+                    DrawRect(BarX + Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown(), BarY - SeperatorHeight, 0, SeperatorHeight + 1, 1, System.Drawing.Color.LightGray);
 
                     Text.DrawText(null, enemyInfo.Player.ChampionName, (int)BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - (float)(enemyInfo.Player.ChampionName.Length * Text.Description.Width) / 2), (int)BarY - SeperatorHeight - Text.Description.Height - 1, new ColorBGRA(255, 255, 255, 255));
                 }
@@ -322,11 +322,11 @@ namespace BaseUlt3
                     if(!indicated && enemyInfo.RecallInfo.EstimatedShootT != 0)
                     {
                         indicated = true;
-                        DrawRect(BarX + (int)(Scale * (float)enemyInfo.RecallInfo.EstimatedShootT), BarY + SeperatorHeight + BarHeight - 3, 0, SeperatorHeight*2, 2, System.Drawing.Color.Orange);
+                        DrawRect(BarX + Scale * enemyInfo.RecallInfo.EstimatedShootT, BarY + SeperatorHeight + BarHeight - 3, 0, SeperatorHeight*2, 2, System.Drawing.Color.Orange);
                     }
 
                     DrawRect(BarX, BarY, (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarHeight, 1, System.Drawing.Color.FromArgb(255, System.Drawing.Color.Red));
-                    DrawRect(BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarY + SeperatorHeight + BarHeight - 3, 0, SeperatorHeight + 1, 1, System.Drawing.Color.IndianRed);
+                    DrawRect(BarX + Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown(), BarY + SeperatorHeight + BarHeight - 3, 0, SeperatorHeight + 1, 1, System.Drawing.Color.IndianRed);
 
                     Text.DrawText(null, enemyInfo.Player.ChampionName, (int)BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - (float)(enemyInfo.Player.ChampionName.Length * Text.Description.Width) / 2), (int)BarY + SeperatorHeight + Text.Description.Height / 2, new ColorBGRA(255, 92, 92, 255));
                 }
@@ -373,7 +373,7 @@ namespace BaseUlt3
         public Dictionary<int, float> IncomingDamage; //from, damage
         public Packet.S2C.Teleport.Struct Recall;
         public bool LockedTarget;
-        public int EstimatedShootT;
+        public float EstimatedShootT;
 
         public RecallInfo(EnemyInfo enemyInfo)
         {

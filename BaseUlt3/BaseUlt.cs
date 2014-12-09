@@ -172,7 +172,7 @@ namespace BaseUlt3
 
                 if (enemyInfo.RecallInfo.GetRecallCountdown() >= timeneeded)
                     enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = (float)Damage.GetSpellDamage(champ, enemyInfo.Player, SpellSlot.R, UltSpellData[champ.ChampionName].SpellStage) * UltSpellData[champ.ChampionName].DamageMultiplicator;
-                else if (enemyInfo.RecallInfo.GetRecallCountdown() < timeneeded)
+                else if (enemyInfo.RecallInfo.GetRecallCountdown() < timeneeded - (champ.IsMe ? 0 : 125)) //some buffer for allies so their damage isnt getting reset
                 {
                     enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = 0;
                     continue;
@@ -181,6 +181,8 @@ namespace BaseUlt3
                 if (champ.IsMe)
                 {
                     me = true;
+
+                    enemyInfo.RecallInfo.EstimatedShootT = (int)timeneeded;
 
                     if(enemyInfo.RecallInfo.GetRecallCountdown() - timeneeded < 60)
                         ultNow = true;
@@ -220,6 +222,7 @@ namespace BaseUlt3
             else
             {
                 enemyInfo.RecallInfo.LockedTarget = false;
+                enemyInfo.RecallInfo.EstimatedShootT = 0;
             }
         }
 
@@ -369,12 +372,13 @@ namespace BaseUlt3
                 return;
 
             bool drawFrame = false;
+            bool indicated = false;
 
             foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x =>
                 x.Player.IsValid &&
                 x.RecallInfo.IsPorting() &&
                 !x.Player.IsDead && //maybe redundant
-                x.RecallInfo.GetRecallCountdown() > 0))
+                x.RecallInfo.GetRecallCountdown() > 0).OrderBy(x => x.RecallInfo.GetRecallCountdown()))
             {
                 if (!enemyInfo.RecallInfo.LockedTarget)
                 {
@@ -385,6 +389,12 @@ namespace BaseUlt3
                 }
                 else
                 {
+                    if(!indicated && enemyInfo.RecallInfo.EstimatedShootT != 0)
+                    {
+                        indicated = true;
+                        DrawRect(BarX + (int)(Scale * (float)enemyInfo.RecallInfo.EstimatedShootT), BarY + SeperatorHeight + BarHeight - 3, 0, SeperatorHeight*2, 2, System.Drawing.Color.Orange);
+                    }
+
                     DrawRect(BarX, BarY, (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarHeight, 1, System.Drawing.Color.FromArgb(255, System.Drawing.Color.Red));
                     DrawRect(BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarY + SeperatorHeight + BarHeight - 3, 0, SeperatorHeight + 1, 1, System.Drawing.Color.IndianRed);
 
@@ -433,6 +443,7 @@ namespace BaseUlt3
         public Dictionary<int, float> IncomingDamage; //from, damage
         public Packet.S2C.Recall.Struct Recall;
         public bool LockedTarget;
+        public int EstimatedShootT;
 
         public RecallInfo(EnemyInfo enemyInfo)
         {
@@ -443,13 +454,14 @@ namespace BaseUlt3
 
         public bool IsPorting()
         {
-            return Recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted || Recall.Status == Packet.S2C.Recall.RecallStatus.TeleportStart;
+            return Recall.Status == Packet.S2C.Recall.RecallStatus.RecallStarted;// || Recall.Status == Packet.S2C.Recall.RecallStatus.TeleportStart;
         }
 
         public EnemyInfo UpdateRecall(Packet.S2C.Recall.Struct newRecall)
         {
             IncomingDamage.Clear();
             LockedTarget = false;
+            EstimatedShootT = 0;
 
             Recall = newRecall;
             return EnemyInfo;

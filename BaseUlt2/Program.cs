@@ -6,8 +6,6 @@ namespace BaseUlt2
 {
     class Program
     {
-        public static Helper Helper;
-
         private static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
@@ -15,8 +13,8 @@ namespace BaseUlt2
 
         private static void Game_OnGameLoad(EventArgs args)
         {
-            Helper = new Helper();
-            var baseult = new BaseUlt();
+            for (int i = 0; i < 2; i++)
+                Game.PrintChat("BASEULT2 IS OUTDATED, PLEASE USE BASEULT3");
         }
     }
 }

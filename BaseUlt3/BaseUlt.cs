@@ -51,6 +51,7 @@ namespace BaseUlt3
             (Menu = new Menu("BaseUlt3", "BaseUlt3", true)).AddToMainMenu();
             Menu.AddItem(new MenuItem("showRecalls", "Show Recalls").SetValue(true));
             Menu.AddItem(new MenuItem("baseUlt", "Base Ult").SetValue(true));
+            Menu.AddItem(new MenuItem("checkCollision", "Check Collision").SetValue(true));
             Menu.AddItem(new MenuItem("panicKey", "No Ult while SBTW").SetValue(new KeyBind(32, KeyBindType.Press))); //32 == space
             Menu.AddItem(new MenuItem("regardlessKey", "No timelimit (hold)").SetValue(new KeyBind(17, KeyBindType.Press))); //17 == ctrl
 
@@ -111,8 +112,8 @@ namespace BaseUlt3
             if (!Menu.Item("baseUlt").GetValue<bool>())
                 return;
 
-            foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x =>
-                x.Player.IsValid &&
+            foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x => 
+                x.Player.IsValid<Obj_AI_Hero>() &&
                 !x.Player.IsDead &&
                 !DisabledChampions.Item(x.Player.ChampionName).GetValue<bool>() && 
                 x.RecallInfo.Recall.Status == Packet.S2C.Teleport.Status.Start && x.RecallInfo.Recall.Type == Packet.S2C.Teleport.Type.Recall).OrderBy(x => x.RecallInfo.GetRecallCountdown()))
@@ -153,12 +154,12 @@ namespace BaseUlt3
             bool me = false;
 
             foreach (Obj_AI_Hero champ in Allies.Where(x => //gathering the damage from allies should probably be done once only with timers
-                            x.IsValid &&
+                            x.IsValid<Obj_AI_Hero>() &&
                             !x.IsDead && 
                             ((x.IsMe && !x.IsStunned) || TeamUlt.Items.Any(item => item.GetValue<bool>() && item.Name == x.ChampionName)) &&
                             CanUseUlt(x)))
             {
-                if (UltSpellData[champ.ChampionName].Collision && IsCollidingWithChamps(champ, EnemySpawnPos, UltSpellData[champ.ChampionName].Width))
+                if (Menu.Item("checkCollision").GetValue<bool>() && UltSpellData[champ.ChampionName].Collision && IsCollidingWithChamps(champ, EnemySpawnPos, UltSpellData[champ.ChampionName].Width))
                 {
                     enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = 0;
                     continue;
@@ -305,17 +306,26 @@ namespace BaseUlt3
             bool indicated = false;
 
             foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x =>
-                x.Player.IsValid &&
-                x.RecallInfo.IsPorting() &&
+                x.Player.IsValid<Obj_AI_Hero>() &&
+                x.RecallInfo.ShouldDraw() &&
                 !x.Player.IsDead && //maybe redundant
                 x.RecallInfo.GetRecallCountdown() > 0).OrderBy(x => x.RecallInfo.GetRecallCountdown()))
             {
                 if (!enemyInfo.RecallInfo.LockedTarget)
                 {
-                    DrawRect(BarX, BarY, (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarHeight, 1, System.Drawing.Color.FromArgb(100, System.Drawing.Color.White));
-                    DrawRect(BarX + Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown(), BarY - SeperatorHeight, 0, SeperatorHeight + 1, 1, System.Drawing.Color.LightGray);
+                    float fadeout = 1;
+                    Color color = System.Drawing.Color.White;
 
-                    Text.DrawText(null, enemyInfo.Player.ChampionName, (int)BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - (float)(enemyInfo.Player.ChampionName.Length * Text.Description.Width) / 2), (int)BarY - SeperatorHeight - Text.Description.Height - 1, new ColorBGRA(255, 255, 255, 255));
+                    if (enemyInfo.RecallInfo.WasAborted())
+                    {
+                        fadeout = enemyInfo.RecallInfo.GetDrawTime() / enemyInfo.RecallInfo.FADEOUT_TIME;
+                        color = System.Drawing.Color.Yellow;
+                    }
+
+                    DrawRect(BarX, BarY, (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarHeight, 1, System.Drawing.Color.FromArgb((int)(100f * fadeout), System.Drawing.Color.White));
+                    DrawRect(BarX + Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown(), BarY - SeperatorHeight, 0, SeperatorHeight + 1, 1, System.Drawing.Color.FromArgb((int)(255f * fadeout), color));
+
+                    Text.DrawText(null, enemyInfo.Player.ChampionName, (int)BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - (float)(enemyInfo.Player.ChampionName.Length * Text.Description.Width) / 2), (int)BarY - SeperatorHeight - Text.Description.Height - 1, new ColorBGRA(color.R, color.G, color.B, (int)((float)color.A * fadeout)));
                 }
                 else
                 {
@@ -372,8 +382,11 @@ namespace BaseUlt3
         public EnemyInfo EnemyInfo;
         public Dictionary<int, float> IncomingDamage; //from, damage
         public Packet.S2C.Teleport.Struct Recall;
+        public Packet.S2C.Teleport.Struct AbortedRecall;
         public bool LockedTarget;
         public float EstimatedShootT;
+        public int AbortedT;
+        public int FADEOUT_TIME = 3000;
 
         public RecallInfo(EnemyInfo enemyInfo)
         {
@@ -382,9 +395,19 @@ namespace BaseUlt3
             IncomingDamage = new Dictionary<int, float>(); 
         }
 
+        public bool ShouldDraw()
+        {
+            return IsPorting() || (WasAborted() && GetDrawTime() > 0);
+        }
+
         public bool IsPorting()
         {
             return Recall.Status == Packet.S2C.Teleport.Status.Start;
+        }
+
+        public bool WasAborted()
+        {
+            return Recall.Type == Packet.S2C.Teleport.Type.Recall && Recall.Status == Packet.S2C.Teleport.Status.Abort;
         }
 
         public EnemyInfo UpdateRecall(Packet.S2C.Teleport.Struct newRecall)
@@ -393,13 +416,42 @@ namespace BaseUlt3
             LockedTarget = false;
             EstimatedShootT = 0;
 
+            if (newRecall.Type == Packet.S2C.Teleport.Type.Recall && newRecall.Status == Packet.S2C.Teleport.Status.Abort)
+            {
+                AbortedRecall = Recall;
+                AbortedT = Environment.TickCount;
+            }   
+            else
+                AbortedT = 0;
+
             Recall = newRecall;
             return EnemyInfo;
         }
 
+        public int GetDrawTime()
+        {
+            int drawtime = 0;
+
+            if(WasAborted())
+                drawtime = FADEOUT_TIME - (Environment.TickCount - AbortedT);
+            else
+                drawtime = GetRecallCountdown();
+
+            return drawtime < 0 ? 0 : drawtime;
+        }
+
         public int GetRecallCountdown()
         {
-            int countdown = Recall.Start + Recall.Duration - Environment.TickCount;
+            int time = Environment.TickCount;
+            int countdown = 0;
+
+            if (time - AbortedT < FADEOUT_TIME)
+                countdown = AbortedRecall.Duration - (AbortedT - AbortedRecall.Start);
+            else if(AbortedT > 0)
+                countdown = 0; //AbortedT = 0
+            else
+                countdown = Recall.Start + Recall.Duration - time;
+
             return countdown < 0 ? 0 : countdown;
         }
 

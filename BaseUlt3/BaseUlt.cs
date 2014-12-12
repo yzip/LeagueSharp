@@ -402,7 +402,7 @@ namespace BaseUlt3
 
         public bool IsPorting()
         {
-            return Recall.Status == Packet.S2C.Teleport.Status.Start;
+            return Recall.Type == Packet.S2C.Teleport.Type.Recall && Recall.Status == Packet.S2C.Teleport.Status.Start;
         }
 
         public bool WasAborted()

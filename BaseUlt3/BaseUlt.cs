@@ -189,21 +189,7 @@ namespace BaseUlt3
 
             if(me)
             {
-                float totalUltDamage = enemyInfo.RecallInfo.IncomingDamage.Values.Sum();
-
-                float targetHealth = GetTargetHealth(enemyInfo, enemyInfo.RecallInfo.GetRecallCountdown());
-
-                int time = Environment.TickCount;
-
-                if (time - enemyInfo.LastSeen > 20000 && !Menu.Item("regardlessKey").GetValue<KeyBind>().Active)
-                {
-                    if (totalUltDamage < enemyInfo.Player.MaxHealth)
-                    {
-                        enemyInfo.RecallInfo.LockedTarget = false;
-                        return;
-                    }
-                }
-                else if (totalUltDamage < targetHealth)
+                if(!IsTargetKillable(enemyInfo))
                 {
                     enemyInfo.RecallInfo.LockedTarget = false;
                     return;
@@ -215,13 +201,30 @@ namespace BaseUlt3
                     return;
 
                 Ultimate.Cast(EnemySpawnPos, true);
-                LastUltCastT = time;
+                LastUltCastT = Environment.TickCount;
             }
             else
             {
                 enemyInfo.RecallInfo.LockedTarget = false;
                 enemyInfo.RecallInfo.EstimatedShootT = 0;
             }
+        }
+
+        bool IsTargetKillable(EnemyInfo enemyInfo)
+        {
+            float totalUltDamage = enemyInfo.RecallInfo.IncomingDamage.Values.Sum();
+
+            float targetHealth = GetTargetHealth(enemyInfo, enemyInfo.RecallInfo.GetRecallCountdown());
+
+            if (Environment.TickCount - enemyInfo.LastSeen > 20000 && !Menu.Item("regardlessKey").GetValue<KeyBind>().Active)
+            {
+                if (totalUltDamage < enemyInfo.Player.MaxHealth)
+                    return false;
+            }
+            else if (totalUltDamage < targetHealth)
+                return false;
+
+            return true;
         }
 
         float GetTargetHealth(EnemyInfo enemyInfo, int additionalTime)
@@ -345,6 +348,16 @@ namespace BaseUlt3
 
                 count++;
             }
+
+            /*
+             * Show in a red rectangle right next to the normal bar the names of champs which can be killed (when they are not recalling yet)
+             * Requires calculating the damages (make more functions!)
+             * 
+             * var BaseUltableEnemies = EnemyInfo.Where(x =>
+                x.Player.IsValid<Obj_AI_Hero>() &&
+                !x.RecallInfo.ShouldDraw() &&
+                !x.Player.IsDead && //maybe redundant
+                x.RecallInfo.GetRecallCountdown() > 0 && x.RecallInfo.LockedTarget).OrderBy(x => x.RecallInfo.GetRecallCountdown());*/
 
             if(count > 0)
             {

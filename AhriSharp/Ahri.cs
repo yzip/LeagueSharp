@@ -15,7 +15,7 @@ namespace AhriSharp
      * ahri dfg if charmed
      * */
 
-    class Ahri
+    internal class Ahri
     {
         private Menu _menu;
 

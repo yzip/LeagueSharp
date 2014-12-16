@@ -6,7 +6,7 @@ using LeagueSharp.Common;
 
 namespace AmumuSharp
 {
-    class Amumu
+    internal class Amumu
     {
         readonly Menu _menu;
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using LeagueSharp;
 using LeagueSharp.Common;
 
 namespace BaseUlt3

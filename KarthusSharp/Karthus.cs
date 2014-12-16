@@ -23,7 +23,7 @@ namespace KarthusSharp
      * - Onspellcast if q farm enabled, disable AA in beforeattack and start timer that lasts casttime
     * */
 
-    class Karthus
+    internal class Karthus
     {
         readonly Menu _menu;
 

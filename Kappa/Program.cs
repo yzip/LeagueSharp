@@ -14,40 +14,39 @@ namespace Kappa
     {
         static void Main(string[] args)
         {
-
-            Game.PrintChat("kappaHD");
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
         private static void Game_OnGameLoad(EventArgs args)
         {
-            try
-            {
-                if (Activator.CreateInstance(null, "Kappa." + ObjectManager.Player.ChampionName) != null)
-                {
-                    Game.PrintChat("Ok!");
-                }
-            }
-            catch(Exception e)
-            {
-                Game.PrintChat("Error!");
-            }
-        }
-    }
-    
-    class Champion
-    {
-        public Champion()
-        {
+            Game.OnGameProcessPacket += Game_OnGameProcessPacket;
 
+            Game.PrintChat("Loaded!");
         }
-    }
 
-    class Ahri : Champion
-    {
-        public Ahri()
+        static void Game_OnGameProcessPacket(GamePacketEventArgs args)
         {
-            Game.PrintChat("Loaded lel");
+            if(args.PacketData[0] == Packet.S2C.Teleport.Header)
+            {
+                /*var packet = new GamePacket(args.PacketData);
+
+                Utility.DumpPacket(packet);
+
+                int UnitNetworkId = packet.ReadInteger(54);
+                var gameObject = ObjectManager.GetUnitByNetworkId<Obj_AI_Hero>(UnitNetworkId);
+
+                if (gameObject == null)
+                    return;
+
+                string typeAsString = packet.ReadString(6);
+                string recallName = packet.ReadString(30);
+
+                Game.PrintChat("recalling: " + gameObject.ChampionName + " Type: " + typeAsString + " RecallName: " + recallName);*/
+
+                var recall = Packet.S2C.Teleport.Decoded(args.PacketData);
+
+                Game.PrintChat("Recall: " + ObjectManager.GetUnitByNetworkId<Obj_AI_Hero>(recall.UnitNetworkId).ChampionName + " Type: " + recall.Type + " Status: " + recall.Status + " Duration: " + recall.Duration);
+            }
         }
     }
 }

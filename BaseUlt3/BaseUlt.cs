@@ -16,7 +16,7 @@ namespace BaseUlt3
      * fixed? use for allies when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready
      * */
 
-    class BaseUlt
+    internal class BaseUlt
     {
         Menu Menu;
         Menu TeamUlt;
@@ -76,14 +76,14 @@ namespace BaseUlt3
                     DisabledChampions.AddItem(new MenuItem(champ.ChampionName, "Don't shoot: " + champ.ChampionName).SetValue(false).DontSave());
             }
 
-            EnemySpawnPos = ObjectManager.Get<GameObject>().FirstOrDefault(x => x.Type == GameObjectType.obj_SpawnPoint && x.IsEnemy).Position;
+            EnemySpawnPos = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position; //ObjectManager.Get<GameObject>().FirstOrDefault(x => x.Type == GameObjectType.obj_SpawnPoint && x.IsEnemy).Position;
 
             Map = Utility.Map.GetMap()._MapType;
 
             Ultimate = new Spell(SpellSlot.R);
 
             Text = new Font(Drawing.Direct3DDevice, new FontDescription{FaceName = "Calibri", Height = 13, Width = 6, OutputPrecision = FontPrecision.Default, Quality = FontQuality.Default});
-            
+
             Game.OnGameProcessPacket += Game_OnGameProcessPacket;
             Drawing.OnPreReset += Drawing_OnPreReset;
             Drawing.OnPostReset += Drawing_OnPostReset;
@@ -302,8 +302,10 @@ namespace BaseUlt3
             if (!Menu.Item("showRecalls").GetValue<bool>() || Drawing.Direct3DDevice == null || Drawing.Direct3DDevice.IsDisposed)
                 return;
 
-            bool drawFrame = false;
             bool indicated = false;
+
+            float fadeout = 1f;
+            int count = 0;
 
             foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x =>
                 x.Player.IsValid<Obj_AI_Hero>() &&
@@ -313,19 +315,19 @@ namespace BaseUlt3
             {
                 if (!enemyInfo.RecallInfo.LockedTarget)
                 {
-                    float fadeout = 1;
+                    fadeout = 1f;
                     Color color = System.Drawing.Color.White;
 
                     if (enemyInfo.RecallInfo.WasAborted())
                     {
-                        fadeout = enemyInfo.RecallInfo.GetDrawTime() / enemyInfo.RecallInfo.FADEOUT_TIME;
+                        fadeout = (float)enemyInfo.RecallInfo.GetDrawTime() / (float)enemyInfo.RecallInfo.FADEOUT_TIME;
                         color = System.Drawing.Color.Yellow;
                     }
 
                     DrawRect(BarX, BarY, (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarHeight, 1, System.Drawing.Color.FromArgb((int)(100f * fadeout), System.Drawing.Color.White));
-                    DrawRect(BarX + Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown(), BarY - SeperatorHeight, 0, SeperatorHeight + 1, 1, System.Drawing.Color.FromArgb((int)(255f * fadeout), color));
+                    DrawRect(BarX + Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - 1, BarY - SeperatorHeight, 0, SeperatorHeight + 1, 1, System.Drawing.Color.FromArgb((int)(255f * fadeout), color));
 
-                    Text.DrawText(null, enemyInfo.Player.ChampionName, (int)BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - (float)(enemyInfo.Player.ChampionName.Length * Text.Description.Width) / 2), (int)BarY - SeperatorHeight - Text.Description.Height - 1, new ColorBGRA(color.R, color.G, color.B, (int)((float)color.A * fadeout)));
+                    Text.DrawText(null, enemyInfo.Player.ChampionName, (int)BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - (float)(enemyInfo.Player.ChampionName.Length * Text.Description.Width) / 2), (int)BarY - SeperatorHeight - Text.Description.Height - 1, new ColorBGRA(color.R, color.G, color.B, (byte)((float)color.A * fadeout)));
                 }
                 else
                 {
@@ -336,23 +338,25 @@ namespace BaseUlt3
                     }
 
                     DrawRect(BarX, BarY, (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown()), BarHeight, 1, System.Drawing.Color.FromArgb(255, System.Drawing.Color.Red));
-                    DrawRect(BarX + Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown(), BarY + SeperatorHeight + BarHeight - 3, 0, SeperatorHeight + 1, 1, System.Drawing.Color.IndianRed);
+                    DrawRect(BarX + Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - 1, BarY + SeperatorHeight + BarHeight - 3, 0, SeperatorHeight + 1, 1, System.Drawing.Color.IndianRed);
 
                     Text.DrawText(null, enemyInfo.Player.ChampionName, (int)BarX + (int)(Scale * (float)enemyInfo.RecallInfo.GetRecallCountdown() - (float)(enemyInfo.Player.ChampionName.Length * Text.Description.Width) / 2), (int)BarY + SeperatorHeight + Text.Description.Height / 2, new ColorBGRA(255, 92, 92, 255));
                 }
 
-                if (!drawFrame)
-                    drawFrame = true;
+                count++;
             }
 
-            if(drawFrame)
+            if(count > 0)
             {
-                DrawRect(BarX, BarY, BarWidth, BarHeight, 1, System.Drawing.Color.FromArgb(40, System.Drawing.Color.White));
+                if (count != 1) //make the whole bar fadeout when its only 1
+                    fadeout = 1f;
 
-                DrawRect(BarX - 1, BarY + 1, 0, BarHeight, 1, System.Drawing.Color.White);
-                DrawRect(BarX - 1, BarY - 1, BarWidth + 2, 1, 1, System.Drawing.Color.White);
-                DrawRect(BarX - 1, BarY + BarHeight, BarWidth + 2, 1, 1, System.Drawing.Color.White);
-                DrawRect(BarX + 1 + BarWidth, BarY + 1, 0, BarHeight, 1, System.Drawing.Color.White);
+                DrawRect(BarX, BarY, BarWidth, BarHeight, 1, System.Drawing.Color.FromArgb((int)(40f * fadeout), System.Drawing.Color.White));
+
+                DrawRect(BarX - 1, BarY + 1, 0, BarHeight, 1, System.Drawing.Color.FromArgb((int)(255f * fadeout), System.Drawing.Color.White));
+                DrawRect(BarX - 1, BarY - 1, BarWidth + 2, 1, 1, System.Drawing.Color.FromArgb((int)(255f * fadeout), System.Drawing.Color.White));
+                DrawRect(BarX - 1, BarY + BarHeight, BarWidth + 2, 1, 1, System.Drawing.Color.FromArgb((int)(255f * fadeout), System.Drawing.Color.White));
+                DrawRect(BarX + 1 + BarWidth, BarY + 1, 0, BarHeight, 1, System.Drawing.Color.FromArgb((int)(255f * fadeout), System.Drawing.Color.White));
             }
         }
 

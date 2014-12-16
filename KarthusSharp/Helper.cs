@@ -7,7 +7,7 @@ using SharpDX;
 
 namespace KarthusSharp
 {
-    class EnemyInfo
+    internal class EnemyInfo
     {
         public Obj_AI_Hero Player;
         public int LastSeen;
@@ -19,7 +19,7 @@ namespace KarthusSharp
         }
     }
 
-    class Helper
+    internal class Helper
     {
         public IEnumerable<Obj_AI_Hero> EnemyTeam;
         public IEnumerable<Obj_AI_Hero> OwnTeam;

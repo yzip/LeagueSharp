@@ -7,7 +7,7 @@ using SharpDX;
 
 namespace AmumuSharp
 {
-    class EnemyInfo
+    internal class EnemyInfo
     {
         public Obj_AI_Hero Player;
         public int LastSeen;
@@ -19,7 +19,7 @@ namespace AmumuSharp
         }
     }
 
-    class Helper
+    internal class Helper
     {
         public IEnumerable<Obj_AI_Hero> EnemyTeam;
         public IEnumerable<Obj_AI_Hero> OwnTeam;

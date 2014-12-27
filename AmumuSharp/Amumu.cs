@@ -27,7 +27,7 @@ namespace AmumuSharp
             (_menu = new Menu("AmumuSharp", "AmumuSharp", true)).AddToMainMenu();
 
             var targetSelectorMenu = new Menu("Target Selector", "TargetSelector");
-            SimpleTs.AddToMenu(targetSelectorMenu);
+            TargetSelector.AddToMenu(targetSelectorMenu);
             _menu.AddSubMenu(targetSelectorMenu);
 
             _orbwalker = new Orbwalking.Orbwalker(_menu.AddSubMenu(new Menu("Orbwalking", "Orbwalking")));
@@ -167,7 +167,7 @@ namespace AmumuSharp
                         CastQ(unitMostTargetsHit);
                 }
 
-                Obj_AI_Base target = SimpleTs.GetTarget(_spellQ.Range, SimpleTs.DamageType.Magical);
+                Obj_AI_Base target = TargetSelector.GetTarget(_spellQ.Range, TargetSelector.DamageType.Magical);
 
                 if (target != null)
                     if (comboQ == 1 || (comboQ == 2 && !Orbwalking.InAutoAttackRange(target)))
@@ -176,7 +176,7 @@ namespace AmumuSharp
 
             if (comboW && _spellW.IsReady())
             {
-                var target = SimpleTs.GetTarget(_spellW.Range, SimpleTs.DamageType.Magical);
+                var target = TargetSelector.GetTarget(_spellW.Range, TargetSelector.DamageType.Magical);
 
                 if (target != null)
                 {
@@ -245,7 +245,7 @@ namespace AmumuSharp
             if (!_spellW.IsReady() || ObjectManager.Player.Spellbook.GetSpell(SpellSlot.W).ToggleState != 2)
                 return;
 
-            var target = SimpleTs.GetTarget(_spellW.Range, SimpleTs.DamageType.Magical);
+            var target = TargetSelector.GetTarget(_spellW.Range, TargetSelector.DamageType.Magical);
             var minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellW.Range, MinionTypes.All, MinionTeam.NotAlly);
 
             if (!ignoreTargetChecks && (target != null || (!_comboW && minions.Count != 0)))

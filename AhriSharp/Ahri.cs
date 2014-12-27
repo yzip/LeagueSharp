@@ -37,7 +37,7 @@ namespace AhriSharp
             (_menu = new Menu("AhriSharp", "AhriSharp", true)).AddToMainMenu();
 
             var targetSelectorMenu = new Menu("Target Selector", "TargetSelector");
-            SimpleTs.AddToMenu(targetSelectorMenu);
+            TargetSelector.AddToMenu(targetSelectorMenu);
             _menu.AddSubMenu(targetSelectorMenu);
 
             _orbwalker = new Orbwalking.Orbwalker(_menu.AddSubMenu(new Menu("Orbwalking", "Orbwalking")));
@@ -159,7 +159,7 @@ namespace AhriSharp
             if (!_spellE.IsReady())
                 return;
 
-            var target = SimpleTs.GetTarget(_spellE.Range, SimpleTs.DamageType.Magical);
+            var target = TargetSelector.GetTarget(_spellE.Range, TargetSelector.DamageType.Magical);
 
             if (target != null)
                 _spellE.CastIfHitchanceEquals(target, HitChance.High);
@@ -170,7 +170,7 @@ namespace AhriSharp
             if (!_spellQ.IsReady())
                 return;
 
-            var target = SimpleTs.GetTarget(_spellQ.Range, SimpleTs.DamageType.Magical);
+            var target = TargetSelector.GetTarget(_spellQ.Range, TargetSelector.DamageType.Magical);
 
             if (target != null)
             {
@@ -193,7 +193,7 @@ namespace AhriSharp
             if (!_spellW.IsReady())
                 return;
 
-            var target = SimpleTs.GetTarget(_spellW.Range, SimpleTs.DamageType.Magical);
+            var target = TargetSelector.GetTarget(_spellW.Range, TargetSelector.DamageType.Magical);
 
             if (target != null || ignoreTargetCheck)
                 _spellW.CastOnUnit(ObjectManager.Player);

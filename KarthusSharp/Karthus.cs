@@ -47,7 +47,7 @@ namespace KarthusSharp
             (_menu = new Menu("KarthusSharp", "KarthusSharp", true)).AddToMainMenu();
 
             var targetSelectorMenu = new Menu("Target Selector", "TargetSelector");
-            SimpleTs.AddToMenu(targetSelectorMenu);
+            TargetSelector.AddToMenu(targetSelectorMenu);
             _menu.AddSubMenu(targetSelectorMenu);
 
             _orbwalker = new Orbwalking.Orbwalker(_menu.AddSubMenu(new Menu("Orbwalking", "Orbwalking")));
@@ -172,11 +172,11 @@ namespace KarthusSharp
             bool anyQTarget = false;
 
             if (_menu.Item("comboW").GetValue<bool>())
-                CastW(SimpleTs.GetTarget(_spellW.Range, SimpleTs.DamageType.Magical), _menu.Item("comboWPercent").GetValue<Slider>().Value);
+                CastW(TargetSelector.GetTarget(_spellW.Range, TargetSelector.DamageType.Magical), _menu.Item("comboWPercent").GetValue<Slider>().Value);
 
             if (_menu.Item("comboE").GetValue<bool>() && _spellE.IsReady() && !IsInPassiveForm())
             {
-                var target = SimpleTs.GetTarget(_spellE.Range, SimpleTs.DamageType.Magical);
+                var target = TargetSelector.GetTarget(_spellE.Range, TargetSelector.DamageType.Magical);
 
                 if (target != null)
                 {
@@ -199,7 +199,7 @@ namespace KarthusSharp
 
             if (_menu.Item("comboQ").GetValue<bool>() && _spellQ.IsReady())
             {
-                var target = SimpleTs.GetTarget(_spellQ.Range, SimpleTs.DamageType.Magical);
+                var target = TargetSelector.GetTarget(_spellQ.Range, TargetSelector.DamageType.Magical);
 
                 if (target != null)
                 {
@@ -217,7 +217,7 @@ namespace KarthusSharp
                 LastHit();
 
             if (_menu.Item("harassQ").GetValue<bool>())
-                CastQ(SimpleTs.GetTarget(_spellQ.Range, SimpleTs.DamageType.Magical), _menu.Item("harassQPercent").GetValue<Slider>().Value);
+                CastQ(TargetSelector.GetTarget(_spellQ.Range, TargetSelector.DamageType.Magical), _menu.Item("harassQPercent").GetValue<Slider>().Value);
         }
 
         void LaneClear(bool ignoreConfig = false)
@@ -328,7 +328,7 @@ namespace KarthusSharp
             if (!_spellE.IsReady() || IsInPassiveForm() ||
                 ObjectManager.Player.Spellbook.GetSpell(SpellSlot.E).ToggleState != 2)
                 return;
-            var target = SimpleTs.GetTarget(_spellE.Range, SimpleTs.DamageType.Magical);
+            var target = TargetSelector.GetTarget(_spellE.Range, TargetSelector.DamageType.Magical);
             var minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _spellE.Range, MinionTypes.All, MinionTeam.NotAlly);
 
             if (!ignoreTargetChecks && (target != null || (!_comboE && minions.Count != 0)))

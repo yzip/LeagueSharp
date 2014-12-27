@@ -43,9 +43,9 @@ namespace Kappa
 
                 Game.PrintChat("recalling: " + gameObject.ChampionName + " Type: " + typeAsString + " RecallName: " + recallName);*/
 
-                var recall = Packet.S2C.Teleport.Decoded(args.PacketData);
+                //var recall = Packet.S2C.Teleport.Decoded(args.PacketData);
 
-                Game.PrintChat("Recall: " + ObjectManager.GetUnitByNetworkId<Obj_AI_Hero>(recall.UnitNetworkId).ChampionName + " Type: " + recall.Type + " Status: " + recall.Status + " Duration: " + recall.Duration);
+                //Game.PrintChat("Recall: " + ObjectManager.GetUnitByNetworkId<Obj_AI_Hero>(recall.UnitNetworkId).ChampionName + " Type: " + recall.Type + " Status: " + recall.Status + " Duration: " + recall.Duration);
             }
         }
     }

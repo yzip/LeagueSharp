@@ -84,7 +84,7 @@ namespace BaseUlt3
 
             Text = new Font(Drawing.Direct3DDevice, new FontDescription{FaceName = "Calibri", Height = 13, Width = 6, OutputPrecision = FontPrecision.Default, Quality = FontQuality.Default});
 
-            Game.OnGameProcessPacket += Game_OnGameProcessPacket;
+            Obj_AI_Base.OnTeleport += Obj_AI_Base_OnTeleport;
             Drawing.OnPreReset += Drawing_OnPreReset;
             Drawing.OnPostReset += Drawing_OnPostReset;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -276,13 +276,13 @@ namespace BaseUlt3
             return Collision.GetCollision(new List<Vector3> { targetpos }, input).Any(); //x => x.NetworkId != targetnetid, hard to realize with teamult
         }
 
-        void Game_OnGameProcessPacket(GamePacketEventArgs args)
+        void Obj_AI_Base_OnTeleport(GameObject sender, GameObjectTeleportEventArgs args)
         {
-            if (args.PacketData[0] == Packet.S2C.Teleport.Header)
-            {
-                var recall = Packet.S2C.Teleport.Decoded(args.PacketData);
-                EnemyInfo.Find(x => x.Player.NetworkId == recall.UnitNetworkId).RecallInfo.UpdateRecall(recall); 
-            }
+            //if (args.PacketData[0] == Packet.S2C.Teleport.Header)
+            //{
+                var recall = Packet.S2C.Teleport.Decoded(sender, args);
+                EnemyInfo.Find(x => x.Player.NetworkId == recall.UnitNetworkId).RecallInfo.UpdateRecall(recall);
+            //}
         }
 
         void Drawing_OnPostReset(EventArgs args)

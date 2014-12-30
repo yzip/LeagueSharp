@@ -14,6 +14,7 @@ namespace BaseUlt3
 {
     /*
      * fixed? use for allies when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready
+     * Fadeout even normal recall finishes
      * */
 
     internal class BaseUlt
@@ -63,14 +64,13 @@ namespace BaseUlt3
 
             bool compatibleChamp = IsCompatibleChamp(ObjectManager.Player.ChampionName);
 
+            TeamUlt = Menu.AddSubMenu(new Menu("Team Baseult Friends", "TeamUlt"));
+            DisabledChampions = Menu.AddSubMenu(new Menu("Disabled Champion targets", "DisabledChampions"));
+
             if (compatibleChamp)
             {
-                TeamUlt = Menu.AddSubMenu(new Menu("Team Baseult Friends", "TeamUlt"));
-
                 foreach (Obj_AI_Hero champ in Allies.Where(x => !x.IsMe && IsCompatibleChamp(x.ChampionName)))
                     TeamUlt.AddItem(new MenuItem(champ.ChampionName, "Ally with baseult: " + champ.ChampionName).SetValue(false).DontSave());
-
-                DisabledChampions = Menu.AddSubMenu(new Menu("Disabled Champion targets", "DisabledChampions"));
 
                 foreach (Obj_AI_Hero champ in Enemies)
                     DisabledChampions.AddItem(new MenuItem(champ.ChampionName, "Don't shoot: " + champ.ChampionName).SetValue(false).DontSave());
@@ -78,7 +78,7 @@ namespace BaseUlt3
 
             EnemySpawnPos = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position; //ObjectManager.Get<GameObject>().FirstOrDefault(x => x.Type == GameObjectType.obj_SpawnPoint && x.IsEnemy).Position;
 
-            Map = Utility.Map.GetMap()._MapType;
+            Map = Utility.Map.GetMap().Type;
 
             Ultimate = new Spell(SpellSlot.R);
 

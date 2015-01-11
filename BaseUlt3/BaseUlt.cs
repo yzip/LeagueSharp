@@ -286,11 +286,15 @@ The idea where the lines come from is that u can calculate how far they are from
 
         void Obj_AI_Base_OnTeleport(GameObject sender, GameObjectTeleportEventArgs args)
         {
-            //if (args.PacketData[0] == Packet.S2C.Teleport.Header)
-            //{
-                var recall = Packet.S2C.Teleport.Decoded(sender, args);
-                EnemyInfo.Find(x => x.Player.NetworkId == recall.UnitNetworkId).RecallInfo.UpdateRecall(recall);
-            //}
+            var unit = sender as Obj_AI_Hero;
+
+            if (unit == null || !unit.IsValid || unit.IsAlly)
+            {
+                return;
+            }
+
+            var recall = Packet.S2C.Teleport.Decoded(unit, args);
+            EnemyInfo.Find(x => x.Player.NetworkId == recall.UnitNetworkId).RecallInfo.UpdateRecall(recall);
         }
 
         void Drawing_OnPostReset(EventArgs args)

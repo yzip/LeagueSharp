@@ -11,7 +11,7 @@ namespace AmumuSharp
     {
         public Obj_AI_Hero Player;
         public int LastSeen;
-        public int LastPinged;
+        //public int LastPinged;
 
         public EnemyInfo(Obj_AI_Hero player)
         {
@@ -66,11 +66,6 @@ namespace AmumuSharp
                 return item.GetValue<T>();
 
             return default(T);
-        }
-
-        public void Ping(Vector3 pos)
-        {
-            Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(pos.X, pos.Y, 0, 0, Packet.PingType.Normal)).Process();
         }
     }
 }

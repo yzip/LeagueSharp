@@ -282,16 +282,16 @@ namespace AmumuSharp
                 var drawR = _menu.Item("drawR" + ObjectManager.Player.ChampionName).GetValue<Circle>();
 
                 if (drawQ.Active)
-                    Utility.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQ.Color);
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQ.Color);
 
                 if (drawW.Active)
-                    Utility.DrawCircle(ObjectManager.Player.Position, _spellW.Range, drawW.Color);
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellW.Range, drawW.Color);
 
                 if (drawE.Active)
-                    Utility.DrawCircle(ObjectManager.Player.Position, _spellE.Range, drawE.Color);
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellE.Range, drawE.Color);
 
                 if (drawR.Active)
-                    Utility.DrawCircle(ObjectManager.Player.Position, _spellR.Range, drawR.Color);
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellR.Range, drawR.Color);
             }
         }
     }

@@ -15,7 +15,15 @@ namespace BaseUlt3
     /*
      * fixed? use for allies when fixed: champ.Spellbook.GetSpell(SpellSlot.R) = Ready
      * Fadeout even normal recall finishes
-     * */
+     * 
+     * @beaving why doesn't team baseult work? did it require packets? we tried yesterday(before l# was fully updated) and my friend ulted, my character was about to ult and then after it saw ez ult it canceled I was playing jinx. WE lost a free kill lol because of it. Does it work? 
+     * 
+     * Hello beaving , iam a great fan of your scripts especially the baseult one , i can see u have did a great work in ur scripts , but while i was playing with baseult3 an idea came up to my mind , A script that can detect position of enemies in a circular shape
+Example:http://imgur.com/2BGvB2C (sry for bad drawing )
+The idea where the lines come from is that u can calculate how far they are from base (enemySpawnPos) , so is it possible to make a script that can just show the position of the enemy while recalling i guess it would help , especially if u can show these lines even when they're not recalling (not sure if it's possible tho ) that would help so much in ganks and other stuff , thanks for your time , and i hope you give me your opinion about this script , have a nice day 
+     ---> draw growing circle as soon as enemies go into fow. if they start recalling, dont increase the circle range. if they finished -> reset. some time limit too?
+     
+     */
 
     internal class BaseUlt
     {

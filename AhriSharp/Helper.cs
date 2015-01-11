@@ -66,10 +66,5 @@ namespace AhriSharp
 
             return default(T);
         }
-
-        public void Ping(Vector3 pos)
-        {
-            Packet.S2C.Ping.Encoded(new Packet.S2C.Ping.Struct(pos.X, pos.Y, 0, 0, Packet.PingType.Normal)).Process();
-        }
     }
 }

@@ -387,7 +387,7 @@ namespace KarthusSharp
                 var drawQ = _menu.Item("drawQ").GetValue<Circle>();
 
                 if (drawQ.Active)
-                    Utility.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQ.Color);
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQ.Color);
             }
 
             if(ObjectManager.Player.Spellbook.GetSpell(SpellSlot.R).Level > 0)
@@ -405,14 +405,14 @@ namespace KarthusSharp
                 {
                     victims += target.Player.ChampionName + " ";
 
-                    if (!_menu.Item("notifyPing").GetValue<bool>() ||
+                    /*if (!_menu.Item("notifyPing").GetValue<bool>() ||
                         (target.LastPinged != 0 && Environment.TickCount - target.LastPinged <= 11000))
                         continue;
                     if (!(ObjectManager.Player.Distance(target.Player) > 1800) ||
                         (!target.Player.IsVisible && time - target.LastSeen <= 2750))
                         continue;
                     Program.Helper.Ping(target.Player.Position);
-                    target.LastPinged = Environment.TickCount;
+                    target.LastPinged = Environment.TickCount;*/
                 }
 
                 if (victims != "" && _menu.Item("notifyR").GetValue<bool>())

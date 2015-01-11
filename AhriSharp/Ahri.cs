@@ -69,7 +69,7 @@ namespace AhriSharp
             var miscMenu = _menu.AddSubMenu(new Menu("Misc", "Misc"));
             miscMenu.AddItem(new MenuItem("packetCast", "Packet Cast").SetValue(true));
 
-            _itemDFG = Utility.Map.GetMap()._MapType == Utility.Map.MapType.TwistedTreeline ? new Items.Item(3188, 750) : new Items.Item(3128, 750);
+            _itemDFG = Utility.Map.GetMap().Type == Utility.Map.MapType.TwistedTreeline ? new Items.Item(3188, 750) : new Items.Item(3128, 750);
 
             _spellQ = new Spell(SpellSlot.Q, 990);
             _spellW = new Spell(SpellSlot.W, 795 - 95);
@@ -287,10 +287,10 @@ namespace AhriSharp
                 var drawW = _menu.Item("drawW").GetValue<Circle>();
 
                 if (drawQE.Active)
-                    Utility.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQE.Color);
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQE.Color);
 
                 if (drawW.Active)
-                    Utility.DrawCircle(ObjectManager.Player.Position, _spellW.Range, drawW.Color);
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellW.Range, drawW.Color);
             }
         }
 

@@ -177,7 +177,7 @@ The idea where the lines come from is that u can calculate how far they are from
                 var timeneeded = GetUltTravelTime(champ, UltSpellData[champ.ChampionName].Speed, UltSpellData[champ.ChampionName].Delay, EnemySpawnPos) - 65;
 
                 if (enemyInfo.RecallInfo.GetRecallCountdown() >= timeneeded)
-                    enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = (float)Damage.GetSpellDamage(champ, enemyInfo.Player, SpellSlot.R, UltSpellData[champ.ChampionName].SpellStage) * UltSpellData[champ.ChampionName].DamageMultiplicator;
+                    enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = (float)champ.GetSpellDamage(enemyInfo.Player, SpellSlot.R, UltSpellData[champ.ChampionName].SpellStage) * UltSpellData[champ.ChampionName].DamageMultiplicator;
                 else if (enemyInfo.RecallInfo.GetRecallCountdown() < timeneeded - (champ.IsMe ? 0 : 125)) //some buffer for allies so their damage isnt getting reset
                 {
                     enemyInfo.RecallInfo.IncomingDamage[champ.NetworkId] = 0;

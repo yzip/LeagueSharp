@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ServiceModel;
 
 using LeagueSharp;
 using SharpDX;
@@ -10,6 +11,29 @@ using LeagueSharp.Common;
 
 namespace Kappa
 {
+    [ServiceContract]
+    public interface IBaseUlt3_API
+    {
+        [OperationContract]
+        bool IsRecalling(Obj_AI_Hero hero);
+
+        [OperationContract]
+        int GetRecallCountdown(Obj_AI_Hero hero);
+    };
+
+    public class BaseUlt3_API : IBaseUlt3_API
+    {
+        public bool IsRecalling(Obj_AI_Hero hero)
+        {
+            return true;
+        }
+
+        public int GetRecallCountdown(Obj_AI_Hero hero)
+        {
+            return 12034234;
+        }
+    };
+
     class Program
     {
         static void Main(string[] args)
@@ -19,14 +43,9 @@ namespace Kappa
 
         private static void Game_OnGameLoad(EventArgs args)
         {
-            Game.OnGameProcessPacket += Game_OnGameProcessPacket;
+            Game.PrintChat("BaseUlt loaded!");
 
-            Game.PrintChat("Loaded!");
-        }
-
-        static void Game_OnGameProcessPacket(GamePacketEventArgs args)
-        {
-
+            Shared.ShareInterface<BaseUlt3_API>();
         }
     }
 }

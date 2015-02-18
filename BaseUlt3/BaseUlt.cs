@@ -93,7 +93,7 @@ The idea where the lines come from is that u can calculate how far they are from
             NotificationsMenu.AddItem(new MenuItem("notifRecFinished", "Recall finished").SetValue(true));
             NotificationsMenu.AddItem(new MenuItem("notifRecAborted", "Recall aborted").SetValue(true));
 
-            EnemySpawnPos = LeagueSharp.ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position; //ObjectManager.Get<GameObject>().FirstOrDefault(x => x.Type == GameObjectType.obj_SpawnPoint && x.IsEnemy).Position;
+            EnemySpawnPos = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position; //ObjectManager.Get<GameObject>().FirstOrDefault(x => x.Type == GameObjectType.obj_SpawnPoint && x.IsEnemy).Position;
 
             Map = Utility.Map.GetMap().Type;
 

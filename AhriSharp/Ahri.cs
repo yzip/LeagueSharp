@@ -8,6 +8,8 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
 
+using ObjectManager = LeagueSharp.Common.ObjectHandler; 
+
 namespace AhriSharp
 {
     /*

@@ -4,6 +4,8 @@ using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 
+using ObjectManager = LeagueSharp.Common.ObjectHandler; 
+
 namespace AmumuSharp
 {
     internal class Amumu

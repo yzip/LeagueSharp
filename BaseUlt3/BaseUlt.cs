@@ -10,6 +10,8 @@ using Collision = LeagueSharp.Common.Collision;
 using Color = System.Drawing.Color;
 using Font = SharpDX.Direct3D9.Font;
 
+using ObjectManager = LeagueSharp.Common.ObjectHandler; 
+
 namespace BaseUlt3
 {
     /*
@@ -48,6 +50,8 @@ The idea where the lines come from is that u can calculate how far they are from
 
         Font Text;
 
+        System.Drawing.Color NotificationColor = System.Drawing.Color.FromArgb(136, 207, 240);
+
         static float BarX = Drawing.Width * 0.425f;
         float BarY = Drawing.Height * 0.80f;
         static int BarWidth = (int)(Drawing.Width - 2 * BarX);
@@ -84,7 +88,12 @@ The idea where the lines come from is that u can calculate how far they are from
                     DisabledChampions.AddItem(new MenuItem(champ.ChampionName, "Don't shoot: " + champ.ChampionName).SetValue(false).DontSave());
             }
 
-            EnemySpawnPos = ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position; //ObjectManager.Get<GameObject>().FirstOrDefault(x => x.Type == GameObjectType.obj_SpawnPoint && x.IsEnemy).Position;
+            var NotificationsMenu = Menu.AddSubMenu(new Menu("Notifications", "Notifications"));
+
+            NotificationsMenu.AddItem(new MenuItem("notifRecFinished", "Recall finished").SetValue(true));
+            NotificationsMenu.AddItem(new MenuItem("notifRecAborted", "Recall aborted").SetValue(true));
+
+            EnemySpawnPos = LeagueSharp.ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(x => x.IsEnemy).Position; //ObjectManager.Get<GameObject>().FirstOrDefault(x => x.Type == GameObjectType.obj_SpawnPoint && x.IsEnemy).Position;
 
             Map = Utility.Map.GetMap().Type;
 
@@ -102,7 +111,20 @@ The idea where the lines come from is that u can calculate how far they are from
             if (compatibleChamp)
                 Game.OnGameUpdate += Game_OnGameUpdate;
 
-            Game.PrintChat("<font color=\"#1eff00\">BaseUlt3 by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
+            ShowNotification("BaseUlt3 by Beaving - Loaded", NotificationColor, 3000);
+        }
+
+        public Notification ShowNotification(string message, System.Drawing.Color color, int duration = -1, bool dispose = true)
+        {
+            var notif = new Notification(message).SetTextColor(color);
+            Notifications.AddNotification(notif);
+
+            if(dispose)
+            {
+                Utility.DelayAction.Add(duration, () => notif.Dispose());
+            }
+
+            return notif;
         }
 
         public bool IsCompatibleChamp(String championName)
@@ -294,7 +316,28 @@ The idea where the lines come from is that u can calculate how far they are from
             }
 
             var recall = Packet.S2C.Teleport.Decoded(unit, args);
-            EnemyInfo.Find(x => x.Player.NetworkId == recall.UnitNetworkId).RecallInfo.UpdateRecall(recall);
+            var enemyInfo = EnemyInfo.Find(x => x.Player.NetworkId == recall.UnitNetworkId).RecallInfo.UpdateRecall(recall);
+
+            if(recall.Type == Packet.S2C.Teleport.Type.Recall)
+            {
+                switch(recall.Status)
+                {
+                    case Packet.S2C.Teleport.Status.Abort:
+                        if(Menu.Item("notifRecAborted").GetValue<bool>())
+                        {
+                            ShowNotification(enemyInfo.Player.ChampionName + ": Recall ABORTED", System.Drawing.Color.Orange, 4000);
+                        }
+                        
+                        break;
+                    case Packet.S2C.Teleport.Status.Finish:
+                        if (Menu.Item("notifRecFinished").GetValue<bool>())
+                        {
+                            ShowNotification(enemyInfo.Player.ChampionName + ": Recall FINISHED", NotificationColor, 4000);
+                        }
+
+                        break;
+                }
+            }
         }
 
         void Drawing_OnPostReset(EventArgs args)

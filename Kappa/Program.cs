@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.ServiceModel;
+using System.Reflection;
 
 using LeagueSharp;
 using SharpDX;
@@ -34,6 +35,14 @@ namespace Kappa
         }
     };
 
+    public class Generic<T>
+    {
+        public Generic()
+        {
+            Console.WriteLine("T={0}", typeof(T));
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -46,6 +55,15 @@ namespace Kappa
             Game.PrintChat("BaseUlt loaded!");
 
             Shared.ShareInterface<BaseUlt3_API>();
+
+            string typeName = "System.String";
+            Type typeArgument = Type.GetType(typeName);
+
+            Type genericClass = typeof(Generic<>);
+            // MakeGenericType is badly named
+            Type constructedClass = genericClass.MakeGenericType(typeArgument);
+
+            object created = Activator.CreateInstance(constructedClass);
         }
     }
 }

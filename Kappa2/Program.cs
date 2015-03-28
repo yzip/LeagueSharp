@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LeagueSharp;
-using LeagueSharp.Common;
+//using LeagueSharp.CommonEx;
 
 namespace Kappa2
 {
@@ -12,8 +12,8 @@ namespace Kappa2
     {
         static void Main(string[] args)
         {
-            CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
-        }
+            //LeagueSharp.CommonEx.Core.Events.OnGameLoad.GameLoad += Game_OnGameLoad;
+        }        
 
         private static void Game_OnGameLoad(EventArgs args)
         {

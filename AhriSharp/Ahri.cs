@@ -8,7 +8,7 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
 
-using ObjectManager = LeagueSharp.Common.ObjectHandler; 
+
 
 namespace AhriSharp
 {
@@ -87,12 +87,12 @@ namespace AhriSharp
             dmgAfterComboItem.ValueChanged += delegate(object sender, OnValueChangeEventArgs eventArgs) { Utility.HpBarDamageIndicator.Enabled = eventArgs.GetNewValue<bool>(); };
 
             Drawing.OnDraw += Drawing_OnDraw;
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnUpdate;
 
             Game.PrintChat("<font color=\"#1eff00\">AhriSharp by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
         }
 
-        void Game_OnGameUpdate(EventArgs args)
+        void Game_OnUpdate(EventArgs args)
         {
             switch (_orbwalker.ActiveMode)
             {

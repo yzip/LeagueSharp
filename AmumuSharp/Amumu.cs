@@ -4,7 +4,7 @@ using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 
-using ObjectManager = LeagueSharp.Common.ObjectHandler; 
+
 
 namespace AmumuSharp
 {
@@ -68,12 +68,12 @@ namespace AmumuSharp
             _spellR.SetSkillshot(.25f, _spellR.Range, float.MaxValue, false, SkillshotType.SkillshotCircle); //check delay
 
             Drawing.OnDraw += Drawing_OnDraw;
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnUpdate;
 
             Game.PrintChat("<font color=\"#1eff00\">AmumuSharp by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
         }
 
-        void Game_OnGameUpdate(EventArgs args)
+        void Game_OnUpdate(EventArgs args)
         {
             AutoUlt();
 

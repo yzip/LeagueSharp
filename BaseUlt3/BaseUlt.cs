@@ -10,7 +10,7 @@ using Collision = LeagueSharp.Common.Collision;
 using Color = System.Drawing.Color;
 using Font = SharpDX.Direct3D9.Font;
 
-using ObjectManager = LeagueSharp.Common.ObjectHandler; 
+
 
 namespace BaseUlt3
 {
@@ -109,30 +109,22 @@ The idea where the lines come from is that u can calculate how far they are from
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_DomainUnload;
 
             if (compatibleChamp)
-                Game.OnGameUpdate += Game_OnGameUpdate;
+                Game.OnUpdate += Game_OnUpdate;
 
             ShowNotification("BaseUlt3 by Beaving - Loaded", NotificationColor, 3000);
         }
 
-        public Notification ShowNotification(string message, System.Drawing.Color color, int duration = -1, bool dispose = true)
+        public void ShowNotification(string message, System.Drawing.Color color, int duration = -1, bool dispose = true)
         {
-            var notif = new Notification(message).SetTextColor(color);
-            Notifications.AddNotification(notif);
-
-            if(dispose)
-            {
-                Utility.DelayAction.Add(duration, () => notif.Dispose());
-            }
-
-            return notif;
+            Notifications.AddNotification(new Notification(message, duration, dispose).SetTextColor(color));
         }
-
+        
         public bool IsCompatibleChamp(String championName)
         {
             return UltSpellData.Keys.Any(x => x == championName);
         }
 
-        void Game_OnGameUpdate(EventArgs args)
+        void Game_OnUpdate(EventArgs args)
         {
             int time = Environment.TickCount;
 

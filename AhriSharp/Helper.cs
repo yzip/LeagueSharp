@@ -33,10 +33,10 @@ namespace AhriSharp
 
             EnemyInfo = EnemyTeam.Select(x => new EnemyInfo(x)).ToList();
 
-            Game.OnGameUpdate += Game_OnGameUpdate;
+            Game.OnUpdate += Game_OnUpdate;
         }
 
-        void Game_OnGameUpdate(EventArgs args)
+        void Game_OnUpdate(EventArgs args)
         {
             var time = Environment.TickCount;
 

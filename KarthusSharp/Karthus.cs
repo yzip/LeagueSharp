@@ -282,7 +282,7 @@ namespace KarthusSharp
         {
             if (!_spellR.IsReady())
                 return;
-            var time = Environment.TickCount;
+            var time = Utils.GameTimeTickCount;
 
             List<Obj_AI_Hero> ultTargets = new List<Obj_AI_Hero>();
 
@@ -396,7 +396,7 @@ namespace KarthusSharp
             {
                 var victims = "";
 
-                var time = Environment.TickCount;
+                var time = Utils.GameTimeTickCount;
 
                 foreach (EnemyInfo target in Program.Helper.EnemyInfo.Where(x =>
                     x.Player.IsValid &&
@@ -408,13 +408,13 @@ namespace KarthusSharp
                     victims += target.Player.ChampionName + " ";
 
                     /*if (!_menu.Item("notifyPing").GetValue<bool>() ||
-                        (target.LastPinged != 0 && Environment.TickCount - target.LastPinged <= 11000))
+                        (target.LastPinged != 0 && Utils.GameTimeTickCount - target.LastPinged <= 11000))
                         continue;
                     if (!(ObjectManager.Player.Distance(target.Player) > 1800) ||
                         (!target.Player.IsVisible && time - target.LastSeen <= 2750))
                         continue;
                     Program.Helper.Ping(target.Player.Position);
-                    target.LastPinged = Environment.TickCount;*/
+                    target.LastPinged = Utils.GameTimeTickCount;*/
                 }
 
                 if (victims != "" && _menu.Item("notifyR").GetValue<bool>())

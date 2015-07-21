@@ -3,67 +3,46 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.ServiceModel;
-using System.Reflection;
-
 using LeagueSharp;
-using SharpDX;
 using LeagueSharp.Common;
+using SharpDX;
 
-namespace Kappa
+namespace masterys
 {
-    [ServiceContract]
-    public interface IBaseUlt3_API
-    {
-        [OperationContract]
-        bool IsRecalling(Obj_AI_Hero hero);
-
-        [OperationContract]
-        int GetRecallCountdown(Obj_AI_Hero hero);
-    };
-
-    public class BaseUlt3_API : IBaseUlt3_API
-    {
-        public bool IsRecalling(Obj_AI_Hero hero)
-        {
-            return true;
-        }
-
-        public int GetRecallCountdown(Obj_AI_Hero hero)
-        {
-            return 12034234;
-        }
-    };
-
-    public class Generic<T>
-    {
-        public Generic()
-        {
-            Console.WriteLine("T={0}", typeof(T));
-        }
-    }
-
     class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
+            try
+            {
+                //Game.OnUpdate += Game_OnUpdate;
+                Console.WriteLine("AttackDelay: " + ObjectManager.Player.AttackDelay);
+                Console.WriteLine("Calc: " + ((int)ObjectManager.Player.AttackDelay * 1000));
+                Console.WriteLine("Calc2: " + (ObjectManager.Player.AttackDelay * 1000));
+                Console.WriteLine("Calc3: " + (ObjectManager.Player.AttackDelay * 1000f));
+
+                Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
-        private static void Game_OnGameLoad(EventArgs args)
+        private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            Game.PrintChat("BaseUlt loaded!");
+            if (sender.IsMe)
+            {
+                Console.WriteLine("kek: {0}", args.SData.OverrideCastTime);
+            }
+        }
 
-            Shared.ShareInterface<BaseUlt3_API>();
-
-            string typeName = "System.String";
-            Type typeArgument = Type.GetType(typeName);
-
-            Type genericClass = typeof(Generic<>);
-            // MakeGenericType is badly named
-            Type constructedClass = genericClass.MakeGenericType(typeArgument);
-
-            object created = Activator.CreateInstance(constructedClass);
+        private static void Game_OnUpdate(EventArgs args)
+        {
+            Console.WriteLine("AttackDelay: " + ObjectManager.Player.AttackDelay);
+            Console.WriteLine("Calc: " + ((int)ObjectManager.Player.AttackDelay * 1000));
+            Console.WriteLine("Calc2: " + (ObjectManager.Player.AttackDelay * 1000));
+            Console.WriteLine("Calc3: " + (ObjectManager.Player.AttackDelay * 1000f));
         }
     }
 }

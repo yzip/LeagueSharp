@@ -126,7 +126,7 @@ The idea where the lines come from is that u can calculate how far they are from
 
         void Game_OnUpdate(EventArgs args)
         {
-            int time = Utils.GameTimeTickCount;
+            int time = Utils.TickCount;
 
             foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x => x.Player.IsVisible))
                 enemyInfo.LastSeen = time;
@@ -140,7 +140,7 @@ The idea where the lines come from is that u can calculate how far they are from
                 !DisabledChampions.Item(x.Player.ChampionName).GetValue<bool>() && 
                 x.RecallInfo.Recall.Status == Packet.S2C.Teleport.Status.Start && x.RecallInfo.Recall.Type == Packet.S2C.Teleport.Type.Recall).OrderBy(x => x.RecallInfo.GetRecallCountdown()))
             {
-                if (Utils.GameTimeTickCount - LastUltCastT > 15000)
+                if (Utils.TickCount - LastUltCastT > 15000)
                     HandleUltTarget(enemyInfo);
             }
         }
@@ -223,7 +223,7 @@ The idea where the lines come from is that u can calculate how far they are from
                     return;
 
                 Ultimate.Cast(EnemySpawnPos, true);
-                LastUltCastT = Utils.GameTimeTickCount;
+                LastUltCastT = Utils.TickCount;
             }
             else
             {
@@ -238,7 +238,7 @@ The idea where the lines come from is that u can calculate how far they are from
 
             float targetHealth = GetTargetHealth(enemyInfo, enemyInfo.RecallInfo.GetRecallCountdown());
 
-            if (Utils.GameTimeTickCount - enemyInfo.LastSeen > 20000 && !Menu.Item("regardlessKey").GetValue<KeyBind>().Active)
+            if (Utils.TickCount - enemyInfo.LastSeen > 20000 && !Menu.Item("regardlessKey").GetValue<KeyBind>().Active)
             {
                 if (totalUltDamage < enemyInfo.Player.MaxHealth)
                     return false;
@@ -254,7 +254,7 @@ The idea where the lines come from is that u can calculate how far they are from
             if (enemyInfo.Player.IsVisible)
                 return enemyInfo.Player.Health;
 
-            float predictedHealth = enemyInfo.Player.Health + enemyInfo.Player.HPRegenRate * ((Utils.GameTimeTickCount - enemyInfo.LastSeen + additionalTime) / 1000f);
+            float predictedHealth = enemyInfo.Player.Health + enemyInfo.Player.HPRegenRate * ((Utils.TickCount - enemyInfo.LastSeen + additionalTime) / 1000f);
 
             return predictedHealth > enemyInfo.Player.MaxHealth ? enemyInfo.Player.MaxHealth : predictedHealth;
         }
@@ -483,7 +483,7 @@ The idea where the lines come from is that u can calculate how far they are from
             if (newRecall.Type == Packet.S2C.Teleport.Type.Recall && newRecall.Status == Packet.S2C.Teleport.Status.Abort)
             {
                 AbortedRecall = Recall;
-                AbortedT = Utils.GameTimeTickCount;
+                AbortedT = Utils.TickCount;
             }   
             else
                 AbortedT = 0;
@@ -497,7 +497,7 @@ The idea where the lines come from is that u can calculate how far they are from
             int drawtime = 0;
 
             if(WasAborted())
-                drawtime = FADEOUT_TIME - (Utils.GameTimeTickCount - AbortedT);
+                drawtime = FADEOUT_TIME - (Utils.TickCount - AbortedT);
             else
                 drawtime = GetRecallCountdown();
 
@@ -506,7 +506,7 @@ The idea where the lines come from is that u can calculate how far they are from
 
         public int GetRecallCountdown()
         {
-            int time = Utils.GameTimeTickCount;
+            int time = Utils.TickCount;
             int countdown = 0;
 
             if (time - AbortedT < FADEOUT_TIME)

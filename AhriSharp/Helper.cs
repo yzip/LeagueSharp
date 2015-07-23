@@ -38,7 +38,7 @@ namespace AhriSharp
 
         void Game_OnUpdate(EventArgs args)
         {
-            var time = Utils.GameTimeTickCount;
+            var time = Utils.TickCount;
 
             foreach (EnemyInfo enemyInfo in EnemyInfo.Where(x => x.Player.IsVisible))
                 enemyInfo.LastSeen = time;
@@ -54,7 +54,7 @@ namespace AhriSharp
             if (playerInfo.Player.IsVisible)
                 return playerInfo.Player.Health;
 
-            var predictedhealth = playerInfo.Player.Health + playerInfo.Player.HPRegenRate * ((Utils.GameTimeTickCount - playerInfo.LastSeen + additionalTime) / 1000f);
+            var predictedhealth = playerInfo.Player.Health + playerInfo.Player.HPRegenRate * ((Utils.TickCount - playerInfo.LastSeen + additionalTime) / 1000f);
 
             return predictedhealth > playerInfo.Player.MaxHealth ? playerInfo.Player.MaxHealth : predictedhealth;
         }

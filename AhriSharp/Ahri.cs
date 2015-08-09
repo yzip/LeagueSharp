@@ -12,22 +12,16 @@ using SharpDX;
 
 namespace AhriSharp
 {
-    /*
-     * - Add dedicated harass key
-     * ahri dfg if charmed
-     * */
-
     internal class Ahri
     {
         private Menu _menu;
 
-        private Items.Item _itemDFG;
-
         private Spell _spellQ, _spellW, _spellE, _spellR;
 
-        const float _spellQSpeed = 2500;
+        const float _spellQSpeed = 2600;
         const float _spellQSpeedMin = 400;
         const float _spellQFarmSpeed = 1600;
+        const float _spellQAcceleration = -3200; 
 
         private static Orbwalking.Orbwalker _orbwalker;
 
@@ -69,27 +63,48 @@ namespace AhriSharp
             drawMenu.AddItem(dmgAfterComboItem);
 
             var miscMenu = _menu.AddSubMenu(new Menu("Misc", "Misc"));
-            miscMenu.AddItem(new MenuItem("packetCast", "Packet Cast").SetValue(true));
+            miscMenu.AddItem(new MenuItem("autoE", "Auto E on gapclosing targets").SetValue(true));
+            miscMenu.AddItem(new MenuItem("autoEI", "Auto E to interrupt").SetValue(true));
 
-            _itemDFG = Utility.Map.GetMap().Type == Utility.Map.MapType.TwistedTreeline ? new Items.Item(3188, 750) : new Items.Item(3128, 750);
 
-            _spellQ = new Spell(SpellSlot.Q, 990);
+            _spellQ = new Spell(SpellSlot.Q, 1000);
             _spellW = new Spell(SpellSlot.W, 795 - 95);
-            _spellE = new Spell(SpellSlot.E, 1000 - 10);
+            _spellE = new Spell(SpellSlot.E, 1000);
             _spellR = new Spell(SpellSlot.R, 1000 - 100);
 
-            _spellQ.SetSkillshot(.215f, 100, 1600f, false, SkillshotType.SkillshotLine);
-            _spellW.SetSkillshot(.71f, _spellW.Range, float.MaxValue, false, SkillshotType.SkillshotLine);
-            _spellE.SetSkillshot(.23f, 60, 1500f, true, SkillshotType.SkillshotLine);
+            _spellQ.SetSkillshot(0.25f, 100, 1600f, false, SkillshotType.SkillshotLine);
+            _spellW.SetSkillshot(0.70f, _spellW.Range, float.MaxValue, false, SkillshotType.SkillshotCircle);
+            _spellE.SetSkillshot(0.25f, 60, 1550f, true, SkillshotType.SkillshotLine);
 
             Utility.HpBarDamageIndicator.DamageToUnit = GetComboDamage;
             Utility.HpBarDamageIndicator.Enabled = dmgAfterComboItem.GetValue<bool>();
             dmgAfterComboItem.ValueChanged += delegate(object sender, OnValueChangeEventArgs eventArgs) { Utility.HpBarDamageIndicator.Enabled = eventArgs.GetNewValue<bool>(); };
 
-            Drawing.OnDraw += Drawing_OnDraw;
+            AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
+            Interrupter2.OnInterruptableTarget += Interrupter2_OnInterruptableTarget;
+            Drawing.OnEndScene += Drawing_OnDraw;
             Game.OnUpdate += Game_OnUpdate;
-
+            
             Game.PrintChat("<font color=\"#1eff00\">AhriSharp by Beaving</font> - <font color=\"#00BFFF\">Loaded</font>");
+        }
+
+        void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
+        {
+            if (!_menu.Item("autoE").GetValue<bool>()) return;
+            if (ObjectManager.Player.Distance(gapcloser.Sender, true) < _spellE.Range * _spellE.Range)
+            {
+                _spellE.Cast(gapcloser.Sender);
+            }
+        }
+
+        void Interrupter2_OnInterruptableTarget(Obj_AI_Hero sender, Interrupter2.InterruptableTargetEventArgs args)
+        {
+            if (!_menu.Item("autoEI").GetValue<bool>()) return;
+
+            if (ObjectManager.Player.Distance(sender, true) < _spellE.Range * _spellE.Range)
+            {
+                _spellE.Cast(sender);
+            }
         }
 
         void Game_OnUpdate(EventArgs args)
@@ -110,22 +125,12 @@ namespace AhriSharp
             }
         }
 
-        public float GetManaPercent()
-        {
-            return (ObjectManager.Player.Mana / ObjectManager.Player.MaxMana) * 100f;
-        }
-
-        public bool PacketsNoLel()
-        {
-            return _menu.Item("packetCast").GetValue<bool>();
-        }
-
         void Harass()
         {
-            if (_menu.Item("harassE").GetValue<bool>() && GetManaPercent() >= _menu.Item("harassPercent").GetValue<Slider>().Value)
+            if (_menu.Item("harassE").GetValue<bool>() && ObjectManager.Player.ManaPercent >= _menu.Item("harassPercent").GetValue<Slider>().Value)
                 CastE();
 
-            if (_menu.Item("harassQ").GetValue<bool>() && GetManaPercent() >= _menu.Item("harassPercent").GetValue<Slider>().Value)
+            if (_menu.Item("harassQ").GetValue<bool>() && ObjectManager.Player.ManaPercent >= _menu.Item("harassPercent").GetValue<Slider>().Value)
                 CastQ();
         }
 
@@ -136,7 +141,7 @@ namespace AhriSharp
 
             bool jungleMobs = minions.Any(x => x.Team == GameObjectTeam.Neutral);
 
-            if ((_menu.Item("farmQ").GetValue<bool>() && GetManaPercent() >= _menu.Item("farmPercent").GetValue<Slider>().Value && ObjectManager.Player.Level >= _menu.Item("farmStartAtLevel").GetValue<Slider>().Value) || jungleMobs)
+            if ((_menu.Item("farmQ").GetValue<bool>() && ObjectManager.Player.ManaPercent >= _menu.Item("farmPercent").GetValue<Slider>().Value && ObjectManager.Player.Level >= _menu.Item("farmStartAtLevel").GetValue<Slider>().Value) || jungleMobs)
             {
                 MinionManager.FarmLocation farmLocation = _spellQ.GetLineFarmLocation(minions);
 
@@ -151,34 +156,48 @@ namespace AhriSharp
             {
                 jungleMobs = minions.Any(x => x.Team == GameObjectTeam.Neutral);
 
-                if ((_menu.Item("farmW").GetValue<bool>() && GetManaPercent() >= _menu.Item("farmPercent").GetValue<Slider>().Value && ObjectManager.Player.Level >= _menu.Item("farmStartAtLevel").GetValue<Slider>().Value) || jungleMobs)
+                if ((_menu.Item("farmW").GetValue<bool>() && ObjectManager.Player.ManaPercent >= _menu.Item("farmPercent").GetValue<Slider>().Value && ObjectManager.Player.Level >= _menu.Item("farmStartAtLevel").GetValue<Slider>().Value) || jungleMobs)
                     CastW(true);
             }
         }
 
-        void CastE()
+        bool CastE()
         {
             if (!_spellE.IsReady())
-                return;
-
+            {
+                return false;    
+            }
+               
             var target = TargetSelector.GetTarget(_spellE.Range, TargetSelector.DamageType.Magical);
 
             if (target != null)
-                _spellE.CastIfHitchanceEquals(target, HitChance.High);
+            {
+                return _spellE.Cast(target) == Spell.CastStates.SuccessfullyCasted;
+            }
+             
+            return false;
         }
 
         void CastQ()
         {
             if (!_spellQ.IsReady())
-                return;
+            {
+                return;    
+            }    
 
             var target = TargetSelector.GetTarget(_spellQ.Range, TargetSelector.DamageType.Magical);
 
             if (target != null)
             {
-                Vector3 predictedPos = Prediction.GetPrediction(target, _spellQ.Delay).UnitPosition; //correct pos currently not possible with spell acceleration
-                _spellQ.Speed = GetDynamicQSpeed(ObjectManager.Player.Distance(predictedPos));
-                _spellQ.CastIfHitchanceEquals(target, HitChance.High);
+                var predictedPos = Prediction.GetPrediction(target, _spellQ.Delay * 1.5f); //correct pos currently not possible with spell acceleration
+                if (predictedPos.Hitchance >= HitChance.High)
+                {
+                    _spellQ.Speed = GetDynamicQSpeed(ObjectManager.Player.Distance(predictedPos.UnitPosition));
+                    if (_spellQ.Speed > 0f)
+                    {
+                        _spellQ.Cast(target);
+                    }  
+                }
             }
         }
 
@@ -193,28 +212,47 @@ namespace AhriSharp
         void CastW(bool ignoreTargetCheck = false)
         {
             if (!_spellW.IsReady())
-                return;
+            {
+                return;    
+            }  
 
             var target = TargetSelector.GetTarget(_spellW.Range, TargetSelector.DamageType.Magical);
 
             if (target != null || ignoreTargetCheck)
-                _spellW.CastOnUnit(ObjectManager.Player);
+            {
+                _spellW.CastOnUnit(ObjectManager.Player);    
+            }   
         }
 
         void Combo()
         {
             if (_menu.Item("comboE").GetValue<bool>())
-                CastE();
+            {
+                if (CastE())
+                {
+                    return;
+                }
+            }
 
             if (_menu.Item("comboQ").GetValue<bool>())
-                CastQ();
+            {
+                CastQ();    
+            }
+
 
             if (_menu.Item("comboW").GetValue<bool>())
-                CastW();
+            {
+                CastW();    
+            }
+
 
             if (_menu.Item("comboR").GetValue<bool>() && _spellR.IsReady())
+            {
                 if (OkToUlt())
-                    _spellR.Cast(Game.CursorPos);
+                {
+                    _spellR.Cast(Game.CursorPos);      
+                }   
+            }
         }
 
         List<SpellSlot> GetSpellCombo()
@@ -298,19 +336,27 @@ namespace AhriSharp
 
         float GetDynamicQSpeed(float distance)
         {
-            float accelerationrate = _spellQ.Range / (_spellQSpeedMin - _spellQSpeed); // = -0.476...
-            return _spellQSpeed + accelerationrate * distance;
+            var a = 0.5f * _spellQAcceleration;
+            var b = _spellQSpeed;
+            var c = - distance;
+
+            if (b * b - 4 * a * c <= 0f)
+            {
+                return 0;    
+            }
+
+            var t = (float) (-b + Math.Sqrt(b * b - 4 * a * c)) / (2 * a);
+            return distance / t;
         }
 
         bool IsRActive()
         {
-            return ObjectManager.Player.HasBuff("AhriTumble", true);
+            return ObjectManager.Player.HasBuff("AhriTumble");
         }
 
         int GetRStacks()
         {
-            BuffInstance tumble = ObjectManager.Player.Buffs.FirstOrDefault(x => x.Name == "AhriTumble");
-            return tumble != null ? tumble.Count : 0;
+            return ObjectManager.Player.GetBuffCount("AhriTumble");
         }
     }
 }

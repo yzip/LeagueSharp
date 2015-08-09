@@ -72,7 +72,7 @@ namespace AhriSharp
             _spellE = new Spell(SpellSlot.E, 1000);
             _spellR = new Spell(SpellSlot.R, 1000 - 100);
 
-            _spellQ.SetSkillshot(0.25f, 100, 1600f, false, SkillshotType.SkillshotLine);
+            _spellQ.SetSkillshot(0.25f, 50, 1600f, false, SkillshotType.SkillshotLine);
             _spellW.SetSkillshot(0.70f, _spellW.Range, float.MaxValue, false, SkillshotType.SkillshotCircle);
             _spellE.SetSkillshot(0.25f, 60, 1550f, true, SkillshotType.SkillshotLine);
 

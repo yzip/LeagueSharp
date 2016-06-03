@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -57,7 +57,8 @@ namespace AhriSharp
             farmMenu.AddItem(new MenuItem("farmStartAtLevel", "Only AA until Level").SetValue(new Slider(8, 1, 18)));
 
             var drawMenu = _menu.AddSubMenu(new Menu("Drawing", "Drawing"));
-            drawMenu.AddItem(new MenuItem("drawQE", "Draw Q, E range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(125, 0, 255, 0))));
+            drawMenu.AddItem(new MenuItem("drawQ", "Draw Q range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(125, 0, 255, 0))));
+            drawMenu.AddItem(new MenuItem("drawE", "Draw E range").SetValue(new Circle(true, System.Drawing.Color.FromArgb(125, 254, 13, 113))));
             drawMenu.AddItem(new MenuItem("drawW", "Draw W range").SetValue(new Circle(false, System.Drawing.Color.FromArgb(125, 0, 0, 255))));
             var dmgAfterComboItem = new MenuItem("DamageAfterCombo", "Draw Combo Damage").SetValue(true); //copied from esk0r Syndra
             drawMenu.AddItem(dmgAfterComboItem);
@@ -67,9 +68,9 @@ namespace AhriSharp
             miscMenu.AddItem(new MenuItem("autoEI", "Auto E to interrupt").SetValue(true));
 
 
-            _spellQ = new Spell(SpellSlot.Q, 1000);
-            _spellW = new Spell(SpellSlot.W, 795 - 95);
-            _spellE = new Spell(SpellSlot.E, 1000);
+            _spellQ = new Spell(SpellSlot.Q, 880);
+            _spellW = new Spell(SpellSlot.W, 700);
+            _spellE = new Spell(SpellSlot.E, 975);
             _spellR = new Spell(SpellSlot.R, 1000 - 100);
 
             _spellQ.SetSkillshot(0.25f, 50, 1600f, false, SkillshotType.SkillshotLine);
@@ -323,11 +324,15 @@ namespace AhriSharp
         {
             if (!ObjectManager.Player.IsDead)
             {
-                var drawQE = _menu.Item("drawQE").GetValue<Circle>();
+                var drawQ = _menu.Item("drawQ").GetValue<Circle>();
                 var drawW = _menu.Item("drawW").GetValue<Circle>();
+                var drawE = _menu.Item("drawE").GetValue<Circle>();
 
-                if (drawQE.Active)
-                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQE.Color);
+                if (drawQ.Active)
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellQ.Range, drawQ.Color);
+
+                if (drawE.Active)
+                    Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellE.Range, drawE.Color);
 
                 if (drawW.Active)
                     Render.Circle.DrawCircle(ObjectManager.Player.Position, _spellW.Range, drawW.Color);

@@ -1,7 +1,7 @@
 ﻿using System;
 using LeagueSharp;
 using LeagueSharp.Common;
-
+1
 namespace AhriSharp
 {
     class Program
